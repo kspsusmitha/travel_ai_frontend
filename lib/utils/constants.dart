@@ -2,8 +2,9 @@ class AppConstants {
   static const String appName = 'TripMate';
   static const String appTagline = 'Your Smart Travel Buddy';
   
-  // API endpoints (to be configured later)
-  static const String baseUrl = 'https://api.tripmate.com';
+  // API endpoints
+  static const String baseUrl = 'http://127.0.0.1:8000';
+  static const String apiPrefix = '/api/';
   
   // Trip types
   static const String tripTypeSolo = 'Solo';
