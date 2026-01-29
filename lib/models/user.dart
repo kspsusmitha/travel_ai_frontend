@@ -5,6 +5,8 @@ enum UserType {
   groupTraveler,
   businessTraveler,
   familyTraveler,
+  admin,
+  superAdmin,
 }
 
 extension UserTypeExtension on UserType {
@@ -18,6 +20,10 @@ extension UserTypeExtension on UserType {
         return 'Business Traveler';
       case UserType.familyTraveler:
         return 'Family Traveler';
+      case UserType.admin:
+        return 'Administrator';
+      case UserType.superAdmin:
+        return 'Super Admin';
     }
   }
 
@@ -31,6 +37,10 @@ extension UserTypeExtension on UserType {
         return 'Manage business trips';
       case UserType.familyTraveler:
         return 'Plan family vacations';
+      case UserType.admin:
+        return 'Manage day-to-day operations';
+      case UserType.superAdmin:
+        return 'System-wide oversight & control';
     }
   }
 
@@ -44,6 +54,10 @@ extension UserTypeExtension on UserType {
         return Icons.business;
       case UserType.familyTraveler:
         return Icons.family_restroom;
+      case UserType.admin:
+        return Icons.admin_panel_settings;
+      case UserType.superAdmin:
+        return Icons.security;
     }
   }
 }

@@ -32,20 +32,15 @@ class _LoginScreenState extends State<LoginScreen>
       vsync: this,
     );
     _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(
-        parent: _animationController,
-        curve: Curves.easeOut,
-      ),
+      CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
     );
-    _slideAnimation = Tween<Offset>(
-      begin: const Offset(0, 0.2),
-      end: Offset.zero,
-    ).animate(
-      CurvedAnimation(
-        parent: _animationController,
-        curve: Curves.easeOutCubic,
-      ),
-    );
+    _slideAnimation =
+        Tween<Offset>(begin: const Offset(0, 0.2), end: Offset.zero).animate(
+          CurvedAnimation(
+            parent: _animationController,
+            curve: Curves.easeOutCubic,
+          ),
+        );
     _animationController.forward();
   }
 
@@ -142,7 +137,9 @@ class _LoginScreenState extends State<LoginScreen>
                           ),
                           onPressed: () {
                             Navigator.pushReplacementNamed(
-                                context, '/user-selection');
+                              context,
+                              '/user-selection',
+                            );
                           },
                         ),
                       ),
@@ -229,83 +226,101 @@ class _LoginScreenState extends State<LoginScreen>
                                 Wrap(
                                   spacing: 12,
                                   runSpacing: 12,
-                                  children: UserType.values.map((type) {
-                                    final isSelected = _selectedUserType == type;
-                                    return GestureDetector(
-                                      onTap: () {
-                                        setState(() {
-                                          _selectedUserType =
-                                              isSelected ? null : type;
-                                        });
-                                      },
-                                      child: Container(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 16,
-                                          vertical: 12,
-                                        ),
-                                        decoration: BoxDecoration(
-                                          gradient: isSelected
-                                              ? LinearGradient(
-                                                  colors: [
-                                                    Colors.white.withOpacity(0.4),
-                                                    Colors.white.withOpacity(0.2),
-                                                  ],
-                                                )
-                                              : LinearGradient(
-                                                  colors: [
-                                                    Colors.white.withOpacity(0.15),
-                                                    Colors.white.withOpacity(0.05),
-                                                  ],
+                                  children: UserType.values
+                                      .where(
+                                        (type) =>
+                                            type != UserType.admin &&
+                                            type != UserType.superAdmin,
+                                      )
+                                      .map((type) {
+                                        final isSelected =
+                                            _selectedUserType == type;
+                                        return GestureDetector(
+                                          onTap: () {
+                                            setState(() {
+                                              _selectedUserType = isSelected
+                                                  ? null
+                                                  : type;
+                                            });
+                                          },
+                                          child: Container(
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 16,
+                                              vertical: 12,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              gradient: isSelected
+                                                  ? LinearGradient(
+                                                      colors: [
+                                                        Colors.white
+                                                            .withOpacity(0.4),
+                                                        Colors.white
+                                                            .withOpacity(0.2),
+                                                      ],
+                                                    )
+                                                  : LinearGradient(
+                                                      colors: [
+                                                        Colors.white
+                                                            .withOpacity(0.15),
+                                                        Colors.white
+                                                            .withOpacity(0.05),
+                                                      ],
+                                                    ),
+                                              borderRadius:
+                                                  BorderRadius.circular(25),
+                                              border: Border.all(
+                                                color: Colors.white.withOpacity(
+                                                  isSelected ? 0.7 : 0.4,
                                                 ),
-                                          borderRadius: BorderRadius.circular(25),
-                                          border: Border.all(
-                                            color: Colors.white.withOpacity(
-                                                isSelected ? 0.7 : 0.4),
-                                            width: isSelected ? 2 : 1.5,
-                                          ),
-                                          boxShadow: isSelected
-                                              ? [
-                                                  BoxShadow(
-                                                    color: Colors.white
-                                                        .withOpacity(0.3),
-                                                    blurRadius: 8,
-                                                    spreadRadius: 0,
-                                                  ),
-                                                ]
-                                              : null,
-                                        ),
-                                        child: Row(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            Icon(
-                                              type.icon,
-                                              size: 18,
-                                              color: Colors.white,
-                                            ),
-                                            const SizedBox(width: 8),
-                                            Text(
-                                              type.displayName,
-                                              style: TextStyle(
-                                                color: Colors.white,
-                                                fontWeight: isSelected
-                                                    ? FontWeight.bold
-                                                    : FontWeight.w600,
-                                                fontSize: 14,
-                                                shadows: [
-                                                  Shadow(
-                                                    color: Colors.black
-                                                        .withOpacity(0.3),
-                                                    blurRadius: 4,
-                                                    offset: const Offset(0, 1),
-                                                  ),
-                                                ],
+                                                width: isSelected ? 2 : 1.5,
                                               ),
+                                              boxShadow: isSelected
+                                                  ? [
+                                                      BoxShadow(
+                                                        color: Colors.white
+                                                            .withOpacity(0.3),
+                                                        blurRadius: 8,
+                                                        spreadRadius: 0,
+                                                      ),
+                                                    ]
+                                                  : null,
                                             ),
-                                          ],
-                                        ),
-                                      ),
-                                    );
-                                  }).toList(),
+                                            child: Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                Icon(
+                                                  type.icon,
+                                                  size: 18,
+                                                  color: Colors.white,
+                                                ),
+                                                const SizedBox(width: 8),
+                                                Text(
+                                                  type.displayName,
+                                                  style: TextStyle(
+                                                    color: Colors.white,
+                                                    fontWeight: isSelected
+                                                        ? FontWeight.bold
+                                                        : FontWeight.w600,
+                                                    fontSize: 14,
+                                                    shadows: [
+                                                      Shadow(
+                                                        color: Colors.black
+                                                            .withOpacity(0.3),
+                                                        blurRadius: 4,
+                                                        offset: const Offset(
+                                                          0,
+                                                          1,
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        );
+                                      })
+                                      .toList(),
                                 ),
                                 const SizedBox(height: 24),
                                 // Username Field
@@ -315,7 +330,8 @@ class _LoginScreenState extends State<LoginScreen>
                                     decoration: BoxDecoration(
                                       color: Colors.white,
                                       border: Border.all(
-                                        color: AppTheme.primaryColor.withOpacity(0.3),
+                                        color: AppTheme.primaryColor
+                                            .withOpacity(0.3),
                                         width: 2,
                                       ),
                                       boxShadow: [
@@ -325,7 +341,8 @@ class _LoginScreenState extends State<LoginScreen>
                                           offset: const Offset(0, 4),
                                         ),
                                         BoxShadow(
-                                          color: AppTheme.primaryColor.withOpacity(0.15),
+                                          color: AppTheme.primaryColor
+                                              .withOpacity(0.15),
                                           blurRadius: 8,
                                           spreadRadius: 1,
                                         ),
@@ -348,7 +365,8 @@ class _LoginScreenState extends State<LoginScreen>
                                         ),
                                         hintText: 'Enter your username',
                                         hintStyle: TextStyle(
-                                          color: AppTheme.textSecondary.withOpacity(0.6),
+                                          color: AppTheme.textSecondary
+                                              .withOpacity(0.6),
                                           fontSize: 15,
                                         ),
                                         prefixIcon: Padding(
@@ -356,8 +374,10 @@ class _LoginScreenState extends State<LoginScreen>
                                           child: Container(
                                             padding: const EdgeInsets.all(8),
                                             decoration: BoxDecoration(
-                                              color: AppTheme.primaryColor.withOpacity(0.1),
-                                              borderRadius: BorderRadius.circular(8),
+                                              color: AppTheme.primaryColor
+                                                  .withOpacity(0.1),
+                                              borderRadius:
+                                                  BorderRadius.circular(8),
                                             ),
                                             child: Icon(
                                               Icons.person_outlined,
@@ -369,10 +389,11 @@ class _LoginScreenState extends State<LoginScreen>
                                         border: InputBorder.none,
                                         enabledBorder: InputBorder.none,
                                         focusedBorder: InputBorder.none,
-                                        contentPadding: const EdgeInsets.symmetric(
-                                          horizontal: 20,
-                                          vertical: 18,
-                                        ),
+                                        contentPadding:
+                                            const EdgeInsets.symmetric(
+                                              horizontal: 20,
+                                              vertical: 18,
+                                            ),
                                       ),
                                       validator: (value) {
                                         if (value == null || value.isEmpty) {
@@ -391,7 +412,8 @@ class _LoginScreenState extends State<LoginScreen>
                                     decoration: BoxDecoration(
                                       color: Colors.white,
                                       border: Border.all(
-                                        color: AppTheme.primaryColor.withOpacity(0.3),
+                                        color: AppTheme.primaryColor
+                                            .withOpacity(0.3),
                                         width: 2,
                                       ),
                                       boxShadow: [
@@ -401,7 +423,8 @@ class _LoginScreenState extends State<LoginScreen>
                                           offset: const Offset(0, 4),
                                         ),
                                         BoxShadow(
-                                          color: AppTheme.primaryColor.withOpacity(0.15),
+                                          color: AppTheme.primaryColor
+                                              .withOpacity(0.15),
                                           blurRadius: 8,
                                           spreadRadius: 1,
                                         ),
@@ -425,7 +448,8 @@ class _LoginScreenState extends State<LoginScreen>
                                         ),
                                         hintText: 'Enter your password',
                                         hintStyle: TextStyle(
-                                          color: AppTheme.textSecondary.withOpacity(0.6),
+                                          color: AppTheme.textSecondary
+                                              .withOpacity(0.6),
                                           fontSize: 15,
                                         ),
                                         prefixIcon: Padding(
@@ -433,8 +457,10 @@ class _LoginScreenState extends State<LoginScreen>
                                           child: Container(
                                             padding: const EdgeInsets.all(8),
                                             decoration: BoxDecoration(
-                                              color: AppTheme.primaryColor.withOpacity(0.1),
-                                              borderRadius: BorderRadius.circular(8),
+                                              color: AppTheme.primaryColor
+                                                  .withOpacity(0.1),
+                                              borderRadius:
+                                                  BorderRadius.circular(8),
                                             ),
                                             child: Icon(
                                               Icons.lock_outlined,
@@ -444,12 +470,15 @@ class _LoginScreenState extends State<LoginScreen>
                                           ),
                                         ),
                                         suffixIcon: Padding(
-                                          padding: const EdgeInsets.only(right: 12),
+                                          padding: const EdgeInsets.only(
+                                            right: 12,
+                                          ),
                                           child: IconButton(
                                             icon: Icon(
                                               _obscurePassword
                                                   ? Icons.visibility_outlined
-                                                  : Icons.visibility_off_outlined,
+                                                  : Icons
+                                                        .visibility_off_outlined,
                                               color: AppTheme.primaryColor,
                                               size: 22,
                                             ),
@@ -464,10 +493,11 @@ class _LoginScreenState extends State<LoginScreen>
                                         border: InputBorder.none,
                                         enabledBorder: InputBorder.none,
                                         focusedBorder: InputBorder.none,
-                                        contentPadding: const EdgeInsets.symmetric(
-                                          horizontal: 20,
-                                          vertical: 18,
-                                        ),
+                                        contentPadding:
+                                            const EdgeInsets.symmetric(
+                                              horizontal: 20,
+                                              vertical: 18,
+                                            ),
                                       ),
                                       validator: (value) {
                                         if (value == null || value.isEmpty) {
@@ -522,7 +552,8 @@ class _LoginScreenState extends State<LoginScreen>
                                       backgroundColor: Colors.transparent,
                                       shadowColor: Colors.transparent,
                                       padding: const EdgeInsets.symmetric(
-                                          vertical: 16),
+                                        vertical: 16,
+                                      ),
                                       shape: RoundedRectangleBorder(
                                         borderRadius: BorderRadius.circular(12),
                                       ),
@@ -535,7 +566,8 @@ class _LoginScreenState extends State<LoginScreen>
                                               strokeWidth: 2,
                                               valueColor:
                                                   AlwaysStoppedAnimation<Color>(
-                                                      Colors.white),
+                                                    Colors.white,
+                                                  ),
                                             ),
                                           )
                                         : const Text(
@@ -561,7 +593,10 @@ class _LoginScreenState extends State<LoginScreen>
                                     ),
                                     TextButton(
                                       onPressed: () {
-                                        Navigator.pushNamed(context, '/register');
+                                        Navigator.pushNamed(
+                                          context,
+                                          '/register',
+                                        );
                                       },
                                       child: const Text(
                                         'Sign Up',

@@ -1,16 +1,19 @@
 import 'package:flutter/material.dart';
 import '../../theme/app_theme.dart';
 import '../../common_widgets/action_dialog.dart';
+import '../../common_widgets/glassmorphism.dart';
 
 /// Admin Users Management Screen
 class AdminUsersManagementScreen extends StatefulWidget {
   const AdminUsersManagementScreen({super.key});
 
   @override
-  State<AdminUsersManagementScreen> createState() => _AdminUsersManagementScreenState();
+  State<AdminUsersManagementScreen> createState() =>
+      _AdminUsersManagementScreenState();
 }
 
-class _AdminUsersManagementScreenState extends State<AdminUsersManagementScreen> {
+class _AdminUsersManagementScreenState
+    extends State<AdminUsersManagementScreen> {
   final TextEditingController _searchController = TextEditingController();
 
   // Dummy users data
@@ -110,108 +113,186 @@ class _AdminUsersManagementScreenState extends State<AdminUsersManagementScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
         title: const Text('Users Management'),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        iconTheme: const IconThemeData(color: Colors.white),
+        titleTextStyle: const TextStyle(
+          color: Colors.white,
+          fontSize: 20,
+          fontWeight: FontWeight.bold,
+        ),
       ),
-      body: Column(
-        children: [
-          // Search Bar
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: TextField(
-              controller: _searchController,
-              decoration: InputDecoration(
-                hintText: 'Search users by name or email...',
-                prefixIcon: const Icon(Icons.search),
-                suffixIcon: _searchController.text.isNotEmpty
-                    ? IconButton(
-                        icon: const Icon(Icons.clear),
-                        onPressed: () {
-                          setState(() {
-                            _searchController.clear();
-                          });
-                        },
-                      )
-                    : null,
-              ),
-              onChanged: (_) => setState(() {}),
-            ),
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [const Color(0xFF1A237E), AppTheme.primaryColor],
           ),
-          // Users Table
-          Expanded(
-            child: _filteredUsers.isEmpty
-                ? Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.people_outline,
-                          size: 64,
-                          color: AppTheme.textSecondary,
+        ),
+        child: SafeArea(
+          child: Column(
+            children: [
+              // Search Bar
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Glassmorphism(
+                  blur: 10,
+                  opacity: 0.1,
+                  borderRadius: BorderRadius.circular(16),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: TextField(
+                      controller: _searchController,
+                      style: const TextStyle(color: Colors.white),
+                      cursorColor: Colors.white,
+                      decoration: InputDecoration(
+                        hintText: 'Search users by name or email...',
+                        hintStyle: TextStyle(
+                          color: Colors.white.withOpacity(0.5),
                         ),
-                        const SizedBox(height: 16),
-                        Text(
-                          'No users found',
-                          style: TextStyle(color: AppTheme.textSecondary),
+                        border: InputBorder.none,
+                        prefixIcon: const Icon(
+                          Icons.search,
+                          color: Colors.white70,
                         ),
-                      ],
+                        suffixIcon: _searchController.text.isNotEmpty
+                            ? IconButton(
+                                icon: const Icon(
+                                  Icons.clear,
+                                  color: Colors.white70,
+                                ),
+                                onPressed: () {
+                                  setState(() {
+                                    _searchController.clear();
+                                  });
+                                },
+                              )
+                            : null,
+                      ),
+                      onChanged: (_) => setState(() {}),
                     ),
-                  )
-                : SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: DataTable(
-                      columns: const [
-                        DataColumn(label: Text('Name')),
-                        DataColumn(label: Text('Email')),
-                        DataColumn(label: Text('Phone')),
-                        DataColumn(label: Text('Status')),
-                        DataColumn(label: Text('Bookings')),
-                        DataColumn(label: Text('Actions')),
-                      ],
-                      rows: _filteredUsers.asMap().entries.map((entry) {
-                        final index = entry.key;
-                        final user = entry.value;
-                        return DataRow(
-                          cells: [
-                            DataCell(Text(user['name'])),
-                            DataCell(Text(user['email'])),
-                            DataCell(Text(user['phone'])),
-                            DataCell(
-                              Chip(
-                                label: Text(
-                                  user['isActive'] ? 'Active' : 'Inactive',
-                                ),
-                                backgroundColor: user['isActive']
-                                    ? AppTheme.successColor.withOpacity(0.2)
-                                    : AppTheme.errorColor.withOpacity(0.2),
-                                labelStyle: TextStyle(
-                                  color: user['isActive']
-                                      ? AppTheme.successColor
-                                      : AppTheme.errorColor,
-                                ),
-                              ),
+                  ),
+                ),
+              ),
+              // Users Table
+              Expanded(
+                child: _filteredUsers.isEmpty
+                    ? Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.people_outline,
+                              size: 64,
+                              color: Colors.white.withOpacity(0.5),
                             ),
-                            DataCell(Text(user['totalBookings'].toString())),
-                            DataCell(
-                              IconButton(
-                                icon: Icon(
-                                  user['isActive']
-                                      ? Icons.block
-                                      : Icons.check_circle,
-                                  color: user['isActive']
-                                      ? AppTheme.errorColor
-                                      : AppTheme.successColor,
-                                ),
-                                onPressed: () => _toggleUserStatus(index),
+                            const SizedBox(height: 16),
+                            Text(
+                              'No users found',
+                              style: TextStyle(
+                                color: Colors.white.withOpacity(0.7),
                               ),
                             ),
                           ],
-                        );
-                      }).toList(),
-                    ),
-                  ),
+                        ),
+                      )
+                    : SingleChildScrollView(
+                        child: Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Glassmorphism(
+                            blur: 10,
+                            opacity: 0.1,
+                            borderRadius: BorderRadius.circular(16),
+                            child: SingleChildScrollView(
+                              scrollDirection: Axis.horizontal,
+                              child: Theme(
+                                data: Theme.of(context).copyWith(
+                                  dividerColor: Colors.white24,
+                                  dataTableTheme: DataTableThemeData(
+                                    headingTextStyle: const TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                    dataTextStyle: const TextStyle(
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ),
+                                child: DataTable(
+                                  columns: const [
+                                    DataColumn(label: Text('Name')),
+                                    DataColumn(label: Text('Email')),
+                                    DataColumn(label: Text('Phone')),
+                                    DataColumn(label: Text('Status')),
+                                    DataColumn(label: Text('Bookings')),
+                                    DataColumn(label: Text('Actions')),
+                                  ],
+                                  rows: _filteredUsers.asMap().entries.map((
+                                    entry,
+                                  ) {
+                                    final index = entry.key;
+                                    final user = entry.value;
+                                    return DataRow(
+                                      cells: [
+                                        DataCell(Text(user['name'])),
+                                        DataCell(Text(user['email'])),
+                                        DataCell(Text(user['phone'])),
+                                        DataCell(
+                                          Chip(
+                                            label: Text(
+                                              user['isActive']
+                                                  ? 'Active'
+                                                  : 'Inactive',
+                                            ),
+                                            backgroundColor: user['isActive']
+                                                ? AppTheme.successColor
+                                                      .withOpacity(0.2)
+                                                : AppTheme.errorColor
+                                                      .withOpacity(0.2),
+                                            labelStyle: TextStyle(
+                                              color: user['isActive']
+                                                  ? AppTheme.successColor
+                                                  : AppTheme.errorColor,
+                                            ),
+                                            side: BorderSide.none,
+                                          ),
+                                        ),
+                                        DataCell(
+                                          Text(
+                                            user['totalBookings'].toString(),
+                                          ),
+                                        ),
+                                        DataCell(
+                                          IconButton(
+                                            icon: Icon(
+                                              user['isActive']
+                                                  ? Icons.block
+                                                  : Icons.check_circle,
+                                              color: user['isActive']
+                                                  ? AppTheme.errorColor
+                                                  : AppTheme.successColor,
+                                            ),
+                                            onPressed: () =>
+                                                _toggleUserStatus(index),
+                                          ),
+                                        ),
+                                      ],
+                                    );
+                                  }).toList(),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }

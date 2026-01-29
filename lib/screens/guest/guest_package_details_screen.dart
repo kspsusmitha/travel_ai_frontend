@@ -9,10 +9,7 @@ import '../auth/register_screen.dart';
 class GuestPackageDetailsScreen extends StatelessWidget {
   final TravelPackage package;
 
-  const GuestPackageDetailsScreen({
-    super.key,
-    required this.package,
-  });
+  const GuestPackageDetailsScreen({super.key, required this.package});
 
   void _showRegistrationPrompt(BuildContext context) {
     showDialog(
@@ -57,9 +54,7 @@ class GuestPackageDetailsScreen extends StatelessWidget {
               Navigator.pop(context);
               Navigator.push(
                 context,
-                MaterialPageRoute(
-                  builder: (context) => const LoginScreen(),
-                ),
+                MaterialPageRoute(builder: (context) => const LoginScreen()),
               );
             },
             child: const Text('Login'),
@@ -69,9 +64,7 @@ class GuestPackageDetailsScreen extends StatelessWidget {
               Navigator.pop(context);
               Navigator.push(
                 context,
-                MaterialPageRoute(
-                  builder: (context) => const RegisterScreen(),
-                ),
+                MaterialPageRoute(builder: (context) => const RegisterScreen()),
               );
             },
             child: const Text('Register'),
@@ -86,18 +79,9 @@ class GuestPackageDetailsScreen extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 4),
       child: Row(
         children: [
-          Icon(
-            Icons.check_circle,
-            size: 16,
-            color: AppTheme.successColor,
-          ),
+          Icon(Icons.check_circle, size: 16, color: AppTheme.successColor),
           const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              text,
-              style: const TextStyle(fontSize: 12),
-            ),
-          ),
+          Expanded(child: Text(text, style: const TextStyle(fontSize: 12))),
         ],
       ),
     );
@@ -106,300 +90,224 @@ class GuestPackageDetailsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
         title: const Text('Package Details'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () {
-            Navigator.pop(context);
-          },
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        iconTheme: const IconThemeData(color: Colors.white),
+        titleTextStyle: const TextStyle(
+          color: Colors.white,
+          fontSize: 20,
+          fontWeight: FontWeight.bold,
+        ),
+        leading: Container(
+          margin: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: Colors.black.withOpacity(0.3),
+            shape: BoxShape.circle,
+          ),
+          child: IconButton(
+            icon: const Icon(Icons.arrow_back, color: Colors.white),
+            onPressed: () {
+              Navigator.pop(context);
+            },
+          ),
         ),
       ),
-      body: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Hero Image Section
-            Container(
-              height: 250,
-              width: double.infinity,
-              child: Stack(
-                fit: StackFit.expand,
-                children: [
-                  // Network Image with fallback
-                  package.primaryImage.isNotEmpty
-                      ? Image.network(
-                          package.primaryImage,
-                          fit: BoxFit.cover,
-                          loadingBuilder: (context, child, loadingProgress) {
-                            if (loadingProgress == null) return child;
-                            return Container(
-                              decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  colors: [
-                                    AppTheme.primaryColor.withOpacity(0.8),
-                                    AppTheme.secondaryColor.withOpacity(0.8),
-                                  ],
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              const Color(0xFF1A237E), // Deep Indigo
+              AppTheme.primaryColor,
+            ],
+          ),
+        ),
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Hero Image Section
+              Container(
+                height: 250,
+                width: double.infinity,
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    // Network Image with fallback
+                    package.primaryImage.isNotEmpty
+                        ? Image.network(
+                            package.primaryImage,
+                            fit: BoxFit.cover,
+                            loadingBuilder: (context, child, loadingProgress) {
+                              if (loadingProgress == null) return child;
+                              return Container(
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    colors: [
+                                      AppTheme.primaryColor.withOpacity(0.8),
+                                      AppTheme.secondaryColor.withOpacity(0.8),
+                                    ],
+                                  ),
                                 ),
-                              ),
-                              child: Center(
-                                child: CircularProgressIndicator(
-                                  value: loadingProgress.expectedTotalBytes != null
-                                      ? loadingProgress.cumulativeBytesLoaded /
-                                          loadingProgress.expectedTotalBytes!
-                                      : null,
-                                  color: Colors.white,
+                                child: Center(
+                                  child: CircularProgressIndicator(
+                                    value:
+                                        loadingProgress.expectedTotalBytes !=
+                                            null
+                                        ? loadingProgress
+                                                  .cumulativeBytesLoaded /
+                                              loadingProgress
+                                                  .expectedTotalBytes!
+                                        : null,
+                                    color: Colors.white,
+                                  ),
                                 ),
-                              ),
-                            );
-                          },
-                          errorBuilder: (context, error, stackTrace) {
-                            return Container(
-                              decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  colors: [
-                                    AppTheme.primaryColor.withOpacity(0.8),
-                                    AppTheme.secondaryColor.withOpacity(0.8),
-                                  ],
+                              );
+                            },
+                            errorBuilder: (context, error, stackTrace) {
+                              return Container(
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    colors: [
+                                      AppTheme.primaryColor.withOpacity(0.8),
+                                      AppTheme.secondaryColor.withOpacity(0.8),
+                                    ],
+                                  ),
                                 ),
+                                child: Icon(
+                                  Icons.landscape,
+                                  size: 100,
+                                  color: Colors.white.withOpacity(0.5),
+                                ),
+                              );
+                            },
+                          )
+                        : Container(
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [
+                                  AppTheme.primaryColor.withOpacity(0.8),
+                                  AppTheme.secondaryColor.withOpacity(0.8),
+                                ],
                               ),
-                              child: Icon(
-                                Icons.landscape,
-                                size: 100,
-                                color: Colors.white.withOpacity(0.5),
-                              ),
-                            );
-                          },
-                        )
-                      : Container(
+                            ),
+                            child: Icon(
+                              Icons.landscape,
+                              size: 100,
+                              color: Colors.white.withOpacity(0.5),
+                            ),
+                          ),
+                    // Gradient overlay for better text readability
+                    Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            Colors.transparent,
+                            Colors.black.withOpacity(0.4),
+                          ],
+                        ),
+                      ),
+                    ),
+                    if (package.isPopular)
+                      Positioned(
+                        top: 16,
+                        right: 16,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 8,
+                          ),
                           decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [
-                                AppTheme.primaryColor.withOpacity(0.8),
-                                AppTheme.secondaryColor.withOpacity(0.8),
-                              ],
-                            ),
+                            color: AppTheme.accentColor,
+                            borderRadius: BorderRadius.circular(20),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.3),
+                                blurRadius: 4,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
                           ),
-                          child: Icon(
-                            Icons.landscape,
-                            size: 100,
-                            color: Colors.white.withOpacity(0.5),
-                          ),
-                        ),
-                  // Gradient overlay for better text readability
-                  Container(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          Colors.transparent,
-                          Colors.black.withOpacity(0.4),
-                        ],
-                      ),
-                    ),
-                  ),
-                  if (package.isPopular)
-                    Positioned(
-                      top: 16,
-                      right: 16,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 8,
-                        ),
-                        decoration: BoxDecoration(
-                          color: AppTheme.accentColor,
-                          borderRadius: BorderRadius.circular(20),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.3),
-                              blurRadius: 4,
-                              offset: const Offset(0, 2),
+                          child: const Text(
+                            'POPULAR',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
                             ),
-                          ],
-                        ),
-                        child: const Text(
-                          'POPULAR',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
                           ),
                         ),
                       ),
-                    ),
-                ],
+                  ],
+                ),
               ),
-            ),
-            // Package Info with Glassmorphism
-            Padding(
-              padding: const EdgeInsets.all(20),
-              child: AnimatedGlassCard(
-                delay: const Duration(milliseconds: 300),
-                blur: 10.0,
-                opacity: 0.2,
-                borderRadius: BorderRadius.circular(25),
-                child: Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+              // Package Info with Glassmorphism
+              Padding(
+                padding: const EdgeInsets.all(20),
+                child: AnimatedGlassCard(
+                  delay: const Duration(milliseconds: 300),
+                  blur: 10.0,
+                  opacity: 0.2,
+                  borderRadius: BorderRadius.circular(25),
+                  child: Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Text(
-                              package.name,
-                              style: const TextStyle(
-                                fontSize: 28,
-                                fontWeight: FontWeight.bold,
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    package.name,
+                                    style: const TextStyle(
+                                      fontSize: 28,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Row(
+                                    children: [
+                                      const Icon(
+                                        Icons.location_on,
+                                        size: 20,
+                                        color: AppTheme.textSecondary,
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        package.destination,
+                                        style: const TextStyle(
+                                          fontSize: 18,
+                                          color: AppTheme.textSecondary,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
                               ),
                             ),
-                            const SizedBox(height: 8),
-                            Row(
-                              children: [
-                                const Icon(
-                                  Icons.location_on,
-                                  size: 20,
-                                  color: AppTheme.textSecondary,
-                                ),
-                                const SizedBox(width: 4),
-                                Text(
-                                  package.destination,
-                                  style: const TextStyle(
-                                    fontSize: 18,
-                                    color: AppTheme.textSecondary,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          Text(
-                            '\$${package.price.toStringAsFixed(0)}',
-                            style: TextStyle(
-                              fontSize: 32,
-                              fontWeight: FontWeight.bold,
-                              color: AppTheme.primaryColor,
-                            ),
-                          ),
-                          Text(
-                            'per person',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: AppTheme.textSecondary,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 24),
-                  // Duration & Features
-                  Row(
-                    children: [
-                      _buildInfoChip(
-                        icon: Icons.calendar_today,
-                        label: '${package.duration} days',
-                      ),
-                      const SizedBox(width: 12),
-                      _buildInfoChip(
-                        icon: Icons.flight_takeoff,
-                        label: 'Travel Package',
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 24),
-                  // Description
-                  Text(
-                    'About This Package',
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    package.description,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      height: 1.6,
-                      color: AppTheme.textSecondary,
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  // Included Features
-                  Text(
-                    'What\'s Included',
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
-                  ),
-                  const SizedBox(height: 12),
-                  ...package.includedFeatures.map((feature) {
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 12),
-                      child: Row(
-                        children: [
-                          Icon(
-                            Icons.check_circle,
-                            color: AppTheme.successColor,
-                            size: 20,
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Text(
-                              feature,
-                              style: const TextStyle(fontSize: 15),
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                  }),
-                  const SizedBox(height: 32),
-                  // Image Gallery Section
-                  if (package.allImages.isNotEmpty) ...[
-                    _buildImageGallery(context),
-                    const SizedBox(height: 32),
-                  ],
-                  // AI Trip Map Section
-                  _buildAITripMapSection(context),
-                  const SizedBox(height: 32),
-                  // Registration Notice
-                  Card(
-                    color: AppTheme.accentColor.withOpacity(0.1),
-                    child: Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Row(
-                        children: [
-                          Icon(
-                            Icons.info_outline,
-                            color: AppTheme.accentColor,
-                            size: 32,
-                          ),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.end,
                               children: [
                                 Text(
-                                  'Registration Required for Booking',
+                                  '\$${package.price.toStringAsFixed(0)}',
                                   style: TextStyle(
+                                    fontSize: 32,
                                     fontWeight: FontWeight.bold,
-                                    color: AppTheme.accentColor,
+                                    color: AppTheme.primaryColor,
                                   ),
                                 ),
-                                const SizedBox(height: 4),
                                 Text(
-                                  'Register now to book this package and access all features.',
+                                  'per person',
                                   style: TextStyle(
                                     fontSize: 12,
                                     color: AppTheme.textSecondary,
@@ -407,89 +315,195 @@ class GuestPackageDetailsScreen extends StatelessWidget {
                                 ),
                               ],
                             ),
+                          ],
+                        ),
+                        const SizedBox(height: 24),
+                        // Duration & Features
+                        Row(
+                          children: [
+                            _buildInfoChip(
+                              icon: Icons.calendar_today,
+                              label: '${package.duration} days',
+                            ),
+                            const SizedBox(width: 12),
+                            _buildInfoChip(
+                              icon: Icons.flight_takeoff,
+                              label: 'Travel Package',
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 24),
+                        // Description
+                        Text(
+                          'About This Package',
+                          style: Theme.of(context).textTheme.titleLarge
+                              ?.copyWith(fontWeight: FontWeight.bold),
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          package.description,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            height: 1.6,
+                            color: AppTheme.textSecondary,
                           ),
+                        ),
+                        const SizedBox(height: 24),
+                        // Included Features
+                        Text(
+                          'What\'s Included',
+                          style: Theme.of(context).textTheme.titleLarge
+                              ?.copyWith(fontWeight: FontWeight.bold),
+                        ),
+                        const SizedBox(height: 12),
+                        ...package.includedFeatures.map((feature) {
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 12),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.check_circle,
+                                  color: AppTheme.successColor,
+                                  size: 20,
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Text(
+                                    feature,
+                                    style: const TextStyle(fontSize: 15),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        }),
+                        const SizedBox(height: 32),
+                        // Image Gallery Section
+                        if (package.allImages.isNotEmpty) ...[
+                          _buildImageGallery(context),
+                          const SizedBox(height: 32),
                         ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  // Action Buttons
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton.icon(
-                      onPressed: () {
-                        _showRegistrationPrompt(context);
-                      },
-                      icon: const Icon(Icons.book_online),
-                      label: const Text(
-                        'Book This Package',
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                      ),
-                      style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: OutlinedButton.icon(
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const LoginScreen(),
-                              ),
-                            );
-                          },
-                          icon: const Icon(Icons.login),
-                          label: const Text('Login'),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: ElevatedButton.icon(
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const RegisterScreen(),
-                              ),
-                            );
-                          },
-                          icon: const Icon(Icons.person_add),
-                          label: const Text('Register'),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppTheme.secondaryColor,
+                        // AI Trip Map Section
+                        _buildAITripMapSection(context),
+                        const SizedBox(height: 32),
+                        // Registration Notice
+                        Card(
+                          color: AppTheme.accentColor.withOpacity(0.1),
+                          child: Padding(
+                            padding: const EdgeInsets.all(16),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.info_outline,
+                                  color: AppTheme.accentColor,
+                                  size: 32,
+                                ),
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'Registration Required for Booking',
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          color: AppTheme.accentColor,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        'Register now to book this package and access all features.',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: AppTheme.textSecondary,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
-                      ),
-                    ],
-                  ),
-                    ],
+                        const SizedBox(height: 24),
+                        // Action Buttons
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton.icon(
+                            onPressed: () {
+                              _showRegistrationPrompt(context);
+                            },
+                            icon: const Icon(Icons.book_online),
+                            label: const Text(
+                              'Book This Package',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: OutlinedButton.icon(
+                                onPressed: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => const LoginScreen(),
+                                    ),
+                                  );
+                                },
+                                icon: const Icon(Icons.login),
+                                label: const Text('Login'),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: ElevatedButton.icon(
+                                onPressed: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          const RegisterScreen(),
+                                    ),
+                                  );
+                                },
+                                icon: const Icon(Icons.person_add),
+                                label: const Text('Register'),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: AppTheme.secondaryColor,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildInfoChip({
-    required IconData icon,
-    required String label,
-  }) {
+  Widget _buildInfoChip({required IconData icon, required String label}) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
         color: AppTheme.primaryColor.withOpacity(0.1),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: AppTheme.primaryColor.withOpacity(0.3),
-        ),
+        border: Border.all(color: AppTheme.primaryColor.withOpacity(0.3)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -498,10 +512,7 @@ class GuestPackageDetailsScreen extends StatelessWidget {
           const SizedBox(width: 6),
           Text(
             label,
-            style: TextStyle(
-              color: AppTheme.primaryColor,
-              fontWeight: FontWeight.w600,
-            ),
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
           ),
         ],
       ),
@@ -510,23 +521,20 @@ class GuestPackageDetailsScreen extends StatelessWidget {
 
   Widget _buildImageGallery(BuildContext context) {
     final images = package.allImages.take(3).toList();
-    
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           children: [
-            Icon(
-              Icons.photo_library,
-              color: AppTheme.primaryColor,
-              size: 28,
-            ),
+            Icon(Icons.photo_library, color: AppTheme.primaryColor, size: 28),
             const SizedBox(width: 8),
             Text(
               'Photo Gallery',
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
             ),
           ],
         ),
@@ -592,8 +600,8 @@ class GuestPackageDetailsScreen extends StatelessWidget {
           decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: [
-                AppTheme.primaryColor.withOpacity(0.3),
-                AppTheme.secondaryColor.withOpacity(0.3),
+                Colors.white.withOpacity(0.1),
+                Colors.white.withOpacity(0.05),
               ],
             ),
           ),
@@ -618,7 +626,7 @@ class GuestPackageDetailsScreen extends StatelessWidget {
                       child: CircularProgressIndicator(
                         value: loadingProgress.expectedTotalBytes != null
                             ? loadingProgress.cumulativeBytesLoaded /
-                                loadingProgress.expectedTotalBytes!
+                                  loadingProgress.expectedTotalBytes!
                             : null,
                         strokeWidth: 2,
                         color: Colors.white,
@@ -650,10 +658,7 @@ class GuestPackageDetailsScreen extends StatelessWidget {
                   gradient: LinearGradient(
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
-                    colors: [
-                      Colors.transparent,
-                      Colors.black.withOpacity(0.1),
-                    ],
+                    colors: [Colors.transparent, Colors.black.withOpacity(0.1)],
                   ),
                 ),
               ),
@@ -687,27 +692,21 @@ class GuestPackageDetailsScreen extends StatelessWidget {
       children: [
         Row(
           children: [
-            Icon(
-              Icons.map,
-              color: AppTheme.primaryColor,
-              size: 28,
-            ),
+            Icon(Icons.map, color: AppTheme.primaryColor, size: 28),
             const SizedBox(width: 8),
             Text(
               'AI Trip Map Generator',
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
             ),
           ],
         ),
         const SizedBox(height: 8),
         Text(
           'Generate a personalized trip map with AI-powered route optimization and activity suggestions.',
-          style: TextStyle(
-            fontSize: 14,
-            color: AppTheme.textSecondary,
-          ),
+          style: TextStyle(fontSize: 14, color: Colors.white70),
         ),
         const SizedBox(height: 16),
         // Map Preview Container with Lock Overlay
@@ -719,10 +718,7 @@ class GuestPackageDetailsScreen extends StatelessWidget {
               decoration: BoxDecoration(
                 color: Colors.grey[200],
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: Colors.grey[300]!,
-                  width: 1,
-                ),
+                border: Border.all(color: Colors.grey[300]!, width: 1),
               ),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(12),
@@ -741,9 +737,7 @@ class GuestPackageDetailsScreen extends StatelessWidget {
                           ],
                         ),
                       ),
-                      child: CustomPaint(
-                        painter: _MapPreviewPainter(),
-                      ),
+                      child: CustomPaint(painter: _MapPreviewPainter()),
                     ),
                     // Blur Overlay
                     Container(
@@ -829,26 +823,20 @@ class GuestPackageDetailsScreen extends StatelessWidget {
           decoration: BoxDecoration(
             color: AppTheme.primaryColor.withOpacity(0.05),
             borderRadius: BorderRadius.circular(8),
-            border: Border.all(
-              color: AppTheme.primaryColor.withOpacity(0.2),
-            ),
+            border: Border.all(color: AppTheme.primaryColor.withOpacity(0.2)),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
                 children: [
-                  Icon(
-                    Icons.star,
-                    size: 16,
-                    color: AppTheme.accentColor,
-                  ),
+                  Icon(Icons.star, size: 16, color: AppTheme.accentColor),
                   const SizedBox(width: 8),
                   Text(
                     'AI Map Features:',
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
-                      color: AppTheme.textPrimary,
+                      color: Colors.white,
                     ),
                   ),
                 ],
@@ -879,10 +867,7 @@ class GuestPackageDetailsScreen extends StatelessWidget {
           Expanded(
             child: Text(
               text,
-              style: TextStyle(
-                fontSize: 13,
-                color: AppTheme.textSecondary,
-              ),
+              style: TextStyle(fontSize: 13, color: Colors.white70),
             ),
           ),
         ],
@@ -932,9 +917,7 @@ class GuestPackageDetailsScreen extends StatelessWidget {
               Navigator.pop(context);
               Navigator.push(
                 context,
-                MaterialPageRoute(
-                  builder: (context) => const LoginScreen(),
-                ),
+                MaterialPageRoute(builder: (context) => const LoginScreen()),
               );
             },
             child: const Text('Login'),
@@ -944,9 +927,7 @@ class GuestPackageDetailsScreen extends StatelessWidget {
               Navigator.pop(context);
               Navigator.push(
                 context,
-                MaterialPageRoute(
-                  builder: (context) => const RegisterScreen(),
-                ),
+                MaterialPageRoute(builder: (context) => const RegisterScreen()),
               );
             },
             child: const Text('Register Now'),
@@ -990,7 +971,13 @@ class _MapPreviewPainter extends CustomPainter {
 
     for (final location in locations) {
       canvas.drawCircle(location, 6, markerPaint);
-      canvas.drawCircle(location, 6, Paint()..color = Colors.white..style = PaintingStyle.fill);
+      canvas.drawCircle(
+        location,
+        6,
+        Paint()
+          ..color = Colors.white
+          ..style = PaintingStyle.fill,
+      );
       canvas.drawCircle(location, 3, markerPaint);
     }
   }

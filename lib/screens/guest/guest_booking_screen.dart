@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../theme/app_theme.dart';
+import '../../common_widgets/glassmorphism.dart';
 import '../../models/travel_package.dart';
 import '../../models/guest_booking.dart';
 import 'guest_confirmation_screen.dart';
@@ -9,10 +10,7 @@ import 'guest_confirmation_screen.dart';
 class GuestBookingScreen extends StatefulWidget {
   final TravelPackage package;
 
-  const GuestBookingScreen({
-    super.key,
-    required this.package,
-  });
+  const GuestBookingScreen({super.key, required this.package});
 
   @override
   State<GuestBookingScreen> createState() => _GuestBookingScreenState();
@@ -45,9 +43,7 @@ class _GuestBookingScreenState extends State<GuestBookingScreen> {
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
-            colorScheme: ColorScheme.light(
-              primary: AppTheme.primaryColor,
-            ),
+            colorScheme: ColorScheme.light(primary: AppTheme.primaryColor),
           ),
           child: child!,
         );
@@ -74,15 +70,15 @@ class _GuestBookingScreenState extends State<GuestBookingScreen> {
 
     final DateTime? picked = await showDatePicker(
       context: context,
-      initialDate: _selectedEndDate ?? _selectedStartDate!.add(Duration(days: widget.package.duration)),
+      initialDate:
+          _selectedEndDate ??
+          _selectedStartDate!.add(Duration(days: widget.package.duration)),
       firstDate: _selectedStartDate!,
       lastDate: DateTime.now().add(const Duration(days: 365)),
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
-            colorScheme: ColorScheme.light(
-              primary: AppTheme.primaryColor,
-            ),
+            colorScheme: ColorScheme.light(primary: AppTheme.primaryColor),
           ),
           child: child!,
         );
@@ -159,341 +155,469 @@ class _GuestBookingScreenState extends State<GuestBookingScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
         title: const Text('Book Travel Package'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () {
-            Navigator.pop(context);
-          },
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        iconTheme: const IconThemeData(color: Colors.white),
+        titleTextStyle: const TextStyle(
+          color: Colors.white,
+          fontSize: 20,
+          fontWeight: FontWeight.bold,
+        ),
+        leading: Container(
+          margin: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: Colors.black.withOpacity(0.3),
+            shape: BoxShape.circle,
+          ),
+          child: IconButton(
+            icon: const Icon(Icons.arrow_back, color: Colors.white),
+            onPressed: () {
+              Navigator.pop(context);
+            },
+          ),
         ),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Service Info Card
-              Card(
-                color: AppTheme.primaryColor.withOpacity(0.1),
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: AppTheme.primaryColor,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: const Icon(
-                          Icons.flight_takeoff,
-                          color: Colors.white,
-                          size: 32,
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              widget.package.name,
-                              style: const TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              const Color(0xFF1A237E), // Deep Indigo
+              AppTheme.primaryColor,
+            ],
+          ),
+        ),
+        child: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(16),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Service Info Card
+                  Glassmorphism(
+                    blur: 10,
+                    opacity: 0.1,
+                    borderRadius: BorderRadius.circular(16),
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: AppTheme.accentColor.withOpacity(0.2),
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(
+                                color: AppTheme.accentColor.withOpacity(0.5),
                               ),
                             ),
-                            const SizedBox(height: 4),
-                            Row(
+                            child: const Icon(
+                              Icons.flight_takeoff,
+                              color: AppTheme.accentColor,
+                              size: 32,
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Icon(
-                                  Icons.location_on,
-                                  size: 14,
-                                  color: AppTheme.textSecondary,
-                                ),
-                                const SizedBox(width: 4),
                                 Text(
-                                  widget.package.destination,
+                                  widget.package.name,
                                   style: const TextStyle(
-                                    color: AppTheme.textSecondary,
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Row(
+                                  children: [
+                                    const Icon(
+                                      Icons.location_on,
+                                      size: 14,
+                                      color: Colors.white70,
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      widget.package.destination,
+                                      style: const TextStyle(
+                                        color: Colors.white70,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  widget.package.description,
+                                  style: const TextStyle(
+                                    color: Colors.white60,
+                                    fontSize: 12,
+                                  ),
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  '\$${widget.package.price.toStringAsFixed(0)} per person',
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppTheme.accentColor,
+                                  ),
+                                ),
+                                Text(
+                                  '${widget.package.duration} days',
+                                  style: const TextStyle(
+                                    color: Colors.white60,
+                                    fontSize: 12,
                                   ),
                                 ),
                               ],
                             ),
-                            const SizedBox(height: 4),
-                            Text(
-                              widget.package.description,
-                              style: const TextStyle(
-                                color: AppTheme.textSecondary,
-                                fontSize: 12,
-                              ),
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  // Name Field
+                  TextFormField(
+                    controller: _nameController,
+                    style: const TextStyle(color: Colors.white),
+                    decoration: _buildGlassInputDecoration(
+                      'Full Name',
+                      Icons.person_outline,
+                    ),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please enter your name';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  // Email Field
+                  TextFormField(
+                    controller: _emailController,
+                    keyboardType: TextInputType.emailAddress,
+                    style: const TextStyle(color: Colors.white),
+                    decoration: _buildGlassInputDecoration(
+                      'Email Address',
+                      Icons.email_outlined,
+                    ),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please enter your email';
+                      }
+                      if (!value.contains('@')) {
+                        return 'Please enter a valid email';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  // Phone Field
+                  TextFormField(
+                    controller: _phoneController,
+                    keyboardType: TextInputType.phone,
+                    style: const TextStyle(color: Colors.white),
+                    decoration: _buildGlassInputDecoration(
+                      'Phone Number',
+                      Icons.phone_outlined,
+                    ),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please enter your phone number';
+                      }
+                      if (value.length < 10) {
+                        return 'Please enter a valid phone number';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 24),
+                  // Start Date Picker
+                  const Text(
+                    'Trip Start Date *',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  InkWell(
+                    onTap: _selectStartDate,
+                    child: Glassmorphism(
+                      blur: 10,
+                      opacity: 0.1,
+                      borderRadius: BorderRadius.circular(12),
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Row(
+                          children: [
+                            const Icon(
+                              Icons.calendar_today,
+                              color: Colors.white70,
                             ),
-                            const SizedBox(height: 8),
-                            Text(
-                              '\$${widget.package.price.toStringAsFixed(0)} per person',
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                _selectedStartDate == null
+                                    ? 'Select trip start date'
+                                    : DateFormat(
+                                        'EEEE, MMMM dd, yyyy',
+                                      ).format(_selectedStartDate!),
+                                style: TextStyle(
+                                  color: _selectedStartDate == null
+                                      ? Colors.white38
+                                      : Colors.white,
+                                ),
+                              ),
+                            ),
+                            const Icon(
+                              Icons.arrow_forward_ios,
+                              size: 16,
+                              color: Colors.white70,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  // End Date Picker
+                  const Text(
+                    'Trip End Date *',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  InkWell(
+                    onTap: _selectEndDate,
+                    child: Glassmorphism(
+                      blur: 10,
+                      opacity: 0.1,
+                      borderRadius: BorderRadius.circular(12),
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.event, color: Colors.white70),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                _selectedEndDate == null
+                                    ? 'Select trip end date'
+                                    : DateFormat(
+                                        'EEEE, MMMM dd, yyyy',
+                                      ).format(_selectedEndDate!),
+                                style: TextStyle(
+                                  color: _selectedEndDate == null
+                                      ? Colors.white38
+                                      : Colors.white,
+                                ),
+                              ),
+                            ),
+                            const Icon(
+                              Icons.arrow_forward_ios,
+                              size: 16,
+                              color: Colors.white70,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  // Number of Travelers
+                  const Text(
+                    'Number of Travelers *',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Glassmorphism(
+                    blur: 10,
+                    opacity: 0.1,
+                    borderRadius: BorderRadius.circular(16),
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text(
+                            'Travelers',
+                            style: TextStyle(color: Colors.white),
+                          ),
+                          Row(
+                            children: [
+                              IconButton(
+                                icon: const Icon(
+                                  Icons.remove_circle_outline,
+                                  color: Colors.white,
+                                ),
+                                onPressed: () {
+                                  if (_numberOfTravelers > 1) {
+                                    setState(() {
+                                      _numberOfTravelers--;
+                                    });
+                                  }
+                                },
+                              ),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 20,
+                                ),
+                                child: Text(
+                                  '$_numberOfTravelers',
+                                  style: const TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ),
+                              IconButton(
+                                icon: const Icon(
+                                  Icons.add_circle_outline,
+                                  color: Colors.white,
+                                ),
+                                onPressed: () {
+                                  setState(() {
+                                    _numberOfTravelers++;
+                                  });
+                                },
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  if (_selectedStartDate != null && _numberOfTravelers > 0) ...[
+                    const SizedBox(height: 16),
+                    Glassmorphism(
+                      blur: 10,
+                      opacity: 0.2, // Slightly more opaque to highlight price
+                      borderRadius: BorderRadius.circular(16),
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text(
+                              'Total Amount:',
                               style: TextStyle(
-                                fontSize: 16,
                                 fontWeight: FontWeight.bold,
-                                color: AppTheme.primaryColor,
+                                color: Colors.white,
                               ),
                             ),
                             Text(
-                              '${widget.package.duration} days',
+                              '\$${(widget.package.price * _numberOfTravelers).toStringAsFixed(2)}',
                               style: const TextStyle(
-                                color: AppTheme.textSecondary,
-                                fontSize: 12,
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                                color: AppTheme.accentColor,
                               ),
                             ),
                           ],
                         ),
                       ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 24),
-              // Name Field
-              TextFormField(
-                controller: _nameController,
-                decoration: const InputDecoration(
-                  labelText: 'Full Name *',
-                  prefixIcon: Icon(Icons.person_outline),
-                  hintText: 'Enter your full name',
-                ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter your name';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 16),
-              // Email Field
-              TextFormField(
-                controller: _emailController,
-                keyboardType: TextInputType.emailAddress,
-                decoration: const InputDecoration(
-                  labelText: 'Email Address *',
-                  prefixIcon: Icon(Icons.email_outlined),
-                  hintText: 'Enter your email',
-                ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter your email';
-                  }
-                  if (!value.contains('@')) {
-                    return 'Please enter a valid email';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 16),
-              // Phone Field
-              TextFormField(
-                controller: _phoneController,
-                keyboardType: TextInputType.phone,
-                decoration: const InputDecoration(
-                  labelText: 'Phone Number *',
-                  prefixIcon: Icon(Icons.phone_outlined),
-                  hintText: 'Enter your phone number',
-                ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter your phone number';
-                  }
-                  if (value.length < 10) {
-                    return 'Please enter a valid phone number';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 24),
-              // Start Date Picker
-              Text(
-                'Trip Start Date *',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
                     ),
-              ),
-              const SizedBox(height: 8),
-              InkWell(
-                onTap: _selectStartDate,
-                child: Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    border: Border.all(color: Colors.grey),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.calendar_today),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Text(
-                          _selectedStartDate == null
-                              ? 'Select trip start date'
-                              : DateFormat('EEEE, MMMM dd, yyyy').format(_selectedStartDate!),
-                          style: TextStyle(
-                            color: _selectedStartDate == null
-                                ? AppTheme.textSecondary
-                                : AppTheme.textPrimary,
-                          ),
-                        ),
+                  ],
+                  const SizedBox(height: 32),
+                  // Submit Button
+                  Container(
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(30),
+                      gradient: const LinearGradient(
+                        colors: [AppTheme.accentColor, Color(0xFF00E5FF)],
                       ),
-                      const Icon(Icons.arrow_forward_ios, size: 16),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              // End Date Picker
-              Text(
-                'Trip End Date *',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-              ),
-              const SizedBox(height: 8),
-              InkWell(
-                onTap: _selectEndDate,
-                child: Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    border: Border.all(color: Colors.grey),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.event),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Text(
-                          _selectedEndDate == null
-                              ? 'Select trip end date'
-                              : DateFormat('EEEE, MMMM dd, yyyy').format(_selectedEndDate!),
-                          style: TextStyle(
-                            color: _selectedEndDate == null
-                                ? AppTheme.textSecondary
-                                : AppTheme.textPrimary,
-                          ),
-                        ),
-                      ),
-                      const Icon(Icons.arrow_forward_ios, size: 16),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 24),
-              // Number of Travelers
-              Text(
-                'Number of Travelers *',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-              ),
-              const SizedBox(height: 8),
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text('Travelers'),
-                      Row(
-                        children: [
-                          IconButton(
-                            icon: const Icon(Icons.remove_circle_outline),
-                            onPressed: () {
-                              if (_numberOfTravelers > 1) {
-                                setState(() {
-                                  _numberOfTravelers--;
-                                });
-                              }
-                            },
-                          ),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 20),
-                            child: Text(
-                              '$_numberOfTravelers',
-                              style: const TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                          IconButton(
-                            icon: const Icon(Icons.add_circle_outline),
-                            onPressed: () {
-                              setState(() {
-                                _numberOfTravelers++;
-                              });
-                            },
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              if (_selectedStartDate != null && _numberOfTravelers > 0) ...[
-                const SizedBox(height: 16),
-                Card(
-                  color: AppTheme.primaryColor.withOpacity(0.1),
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text(
-                          'Total Amount:',
-                          style: TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                        Text(
-                          '\$${(widget.package.price * _numberOfTravelers).toStringAsFixed(2)}',
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            color: AppTheme.primaryColor,
-                          ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppTheme.accentColor.withOpacity(0.3),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
                         ),
                       ],
                     ),
-                  ),
-                ),
-              ],
-              const SizedBox(height: 32),
-              // Submit Button
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: _isLoading ? null : _handleBooking,
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                  ),
-                  child: _isLoading
-                      ? const SizedBox(
-                          height: 20,
-                          width: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                          ),
-                        )
-                      : const Text(
-                          'Confirm Booking',
-                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    child: ElevatedButton(
+                      onPressed: _isLoading ? null : _handleBooking,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.transparent,
+                        shadowColor: Colors.transparent,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(30),
                         ),
-                ),
+                      ),
+                      child: _isLoading
+                          ? const SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  Colors.white,
+                                ),
+                              ),
+                            )
+                          : const Text(
+                              'Confirm Booking',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF1A1A2E),
+                              ),
+                            ),
+                    ),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
         ),
       ),
+    );
+  }
+
+  InputDecoration _buildGlassInputDecoration(String label, IconData icon) {
+    return InputDecoration(
+      labelText: label,
+      labelStyle: const TextStyle(color: Colors.white70),
+      prefixIcon: Icon(icon, color: Colors.white70),
+      hintText: 'Enter $label',
+      hintStyle: const TextStyle(color: Colors.white38),
+      filled: true,
+      fillColor: Colors.white.withOpacity(0.1),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide.none,
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: Colors.white.withOpacity(0.1)),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: AppTheme.accentColor, width: 2),
+      ),
+      errorStyle: const TextStyle(color: AppTheme.errorColor),
     );
   }
 }

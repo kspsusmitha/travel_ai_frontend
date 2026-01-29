@@ -73,41 +73,32 @@ class _HomeScreenState extends State<HomeScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      extendBody: true,
       body: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
             colors: [
-              AppTheme.primaryColor.withOpacity(0.1),
-              AppTheme.secondaryColor.withOpacity(0.05),
-              Colors.white,
+              const Color(0xFF1A237E), // Deep Indigo
+              AppTheme.primaryColor,
             ],
           ),
         ),
         child: Column(
           children: [
-            // Custom App Bar with glassmorphism
-            Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    AppTheme.primaryColor,
-                    AppTheme.secondaryColor,
-                  ],
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
-                    blurRadius: 10,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
+            // Custom Glass App Bar
+            Glassmorphism(
+              blur: 10,
+              opacity: 0.1,
+              borderRadius: BorderRadius.zero,
               child: SafeArea(
                 bottom: false,
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -117,24 +108,45 @@ class _HomeScreenState extends State<HomeScreen>
                           color: Colors.white,
                           fontSize: 24,
                           fontWeight: FontWeight.bold,
+                          letterSpacing: 1,
                         ),
                       ),
                       Row(
                         children: [
-                          IconButton(
-                            icon: const Icon(Icons.notifications_outlined, color: Colors.white),
-                            onPressed: () {
-                              // TODO: Show notifications
-                            },
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.1),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              Icons.notifications_outlined,
+                              color: Colors.white,
+                              size: 20,
+                            ),
                           ),
-                          IconButton(
-                            icon: const Icon(Icons.person_outline, color: Colors.white),
-                            onPressed: () {
+                          const SizedBox(width: 12),
+                          GestureDetector(
+                            onTap: () {
                               Navigator.push(
                                 context,
-                                MaterialPageRoute(builder: (context) => const ProfileScreen()),
+                                MaterialPageRoute(
+                                  builder: (context) => const ProfileScreen(),
+                                ),
                               );
                             },
+                            child: Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withOpacity(0.1),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.person_outline,
+                                color: Colors.white,
+                                size: 20,
+                              ),
+                            ),
                           ),
                         ],
                       ),
@@ -147,32 +159,35 @@ class _HomeScreenState extends State<HomeScreen>
           ],
         ),
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _currentIndex,
-        onTap: (index) {
-          setState(() {
-            _currentIndex = index;
-          });
-        },
-        type: BottomNavigationBarType.fixed,
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: 'Home',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.explore),
-            label: 'Explore',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.wallet),
-            label: 'Budget',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.location_on),
-            label: 'Nearby',
-          ),
-        ],
+      bottomNavigationBar: Glassmorphism(
+        blur: 20,
+        opacity: 0.2,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        child: BottomNavigationBar(
+          currentIndex: _currentIndex,
+          onTap: (index) {
+            setState(() {
+              _currentIndex = index;
+            });
+          },
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          type: BottomNavigationBarType.fixed,
+          selectedItemColor: AppTheme.accentColor,
+          unselectedItemColor: Colors.white60,
+          items: const [
+            BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.explore),
+              label: 'Explore',
+            ),
+            BottomNavigationBarItem(icon: Icon(Icons.wallet), label: 'Budget'),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.location_on),
+              label: 'Nearby',
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -271,9 +286,9 @@ class _HomeScreenState extends State<HomeScreen>
           // Quick Actions
           Text(
             'Quick Actions',
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 16),
           Row(
@@ -422,9 +437,8 @@ class _HomeScreenState extends State<HomeScreen>
                           const SizedBox(width: 8),
                           Text(
                             'My Trips',
-                            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                ),
+                            style: Theme.of(context).textTheme.titleLarge
+                                ?.copyWith(fontWeight: FontWeight.bold),
                           ),
                         ],
                       ),
@@ -457,9 +471,8 @@ class _HomeScreenState extends State<HomeScreen>
                             const SizedBox(height: 16),
                             Text(
                               'No trips yet',
-                              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                    color: AppTheme.textSecondary,
-                                  ),
+                              style: Theme.of(context).textTheme.titleMedium
+                                  ?.copyWith(color: AppTheme.textSecondary),
                             ),
                             const SizedBox(height: 8),
                             const Text(
@@ -470,15 +483,15 @@ class _HomeScreenState extends State<HomeScreen>
                         ),
                       ),
                     )
-                    else
-                      ..._trips.asMap().entries.map((entry) {
-                        return Padding(
-                          padding: EdgeInsets.only(
-                            bottom: entry.key < _trips.length - 1 ? 12 : 0,
-                          ),
-                          child: _buildTripCard(entry.value, entry.key),
-                        );
-                      }),
+                  else
+                    ..._trips.asMap().entries.map((entry) {
+                      return Padding(
+                        padding: EdgeInsets.only(
+                          bottom: entry.key < _trips.length - 1 ? 12 : 0,
+                        ),
+                        child: _buildTripCard(entry.value, entry.key),
+                      );
+                    }),
                 ],
               ),
             ),
@@ -543,9 +556,8 @@ class _HomeScreenState extends State<HomeScreen>
                       children: [
                         Text(
                           'Discover',
-                          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                                fontWeight: FontWeight.bold,
-                              ),
+                          style: Theme.of(context).textTheme.headlineSmall
+                              ?.copyWith(fontWeight: FontWeight.bold),
                         ),
                         const SizedBox(height: 4),
                         Text(
@@ -650,10 +662,7 @@ class _HomeScreenState extends State<HomeScreen>
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [
-              color.withOpacity(0.2),
-              color.withOpacity(0.1),
-            ],
+            colors: [color.withOpacity(0.2), color.withOpacity(0.1)],
           ),
         ),
         child: Column(
@@ -663,10 +672,7 @@ class _HomeScreenState extends State<HomeScreen>
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [
-                    color,
-                    color.withOpacity(0.7),
-                  ],
+                  colors: [color, color.withOpacity(0.7)],
                 ),
                 shape: BoxShape.circle,
                 boxShadow: [
@@ -706,9 +712,7 @@ class _HomeScreenState extends State<HomeScreen>
       onTap: () {
         Navigator.push(
           context,
-          MaterialPageRoute(
-            builder: (context) => TripDetailScreen(trip: trip),
-          ),
+          MaterialPageRoute(builder: (context) => TripDetailScreen(trip: trip)),
         );
       },
       child: Container(
@@ -743,26 +747,24 @@ class _HomeScreenState extends State<HomeScreen>
                   ),
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       colors: trip.type == AppConstants.tripTypeGroup
-                          ? [
-                              AppTheme.primaryColor,
-                              AppTheme.secondaryColor,
-                            ]
-                          : [
-                              Colors.grey,
-                              Colors.grey.shade600,
-                            ],
+                          ? [AppTheme.primaryColor, AppTheme.secondaryColor]
+                          : [Colors.grey, Colors.grey.shade600],
                     ),
                     borderRadius: BorderRadius.circular(20),
                     boxShadow: [
                       BoxShadow(
-                        color: (trip.type == AppConstants.tripTypeGroup
-                                ? AppTheme.primaryColor
-                                : Colors.grey)
-                            .withOpacity(0.3),
+                        color:
+                            (trip.type == AppConstants.tripTypeGroup
+                                    ? AppTheme.primaryColor
+                                    : Colors.grey)
+                                .withOpacity(0.3),
                         blurRadius: 8,
                         offset: const Offset(0, 2),
                       ),
@@ -782,11 +784,7 @@ class _HomeScreenState extends State<HomeScreen>
             const SizedBox(height: 12),
             Row(
               children: [
-                Icon(
-                  Icons.location_on,
-                  size: 18,
-                  color: AppTheme.primaryColor,
-                ),
+                Icon(Icons.location_on, size: 18, color: AppTheme.primaryColor),
                 const SizedBox(width: 6),
                 Text(
                   trip.destination,
@@ -826,18 +824,13 @@ class _HomeScreenState extends State<HomeScreen>
     );
   }
 
-  Widget _buildTripInfoChip({
-    required IconData icon,
-    required String label,
-  }) {
+  Widget _buildTripInfoChip({required IconData icon, required String label}) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
         color: AppTheme.primaryColor.withOpacity(0.1),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: AppTheme.primaryColor.withOpacity(0.2),
-        ),
+        border: Border.all(color: AppTheme.primaryColor.withOpacity(0.2)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -877,10 +870,7 @@ class _HomeScreenState extends State<HomeScreen>
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [
-              color.withOpacity(0.1),
-              color.withOpacity(0.05),
-            ],
+            colors: [color.withOpacity(0.1), color.withOpacity(0.05)],
           ),
         ),
         child: Row(
@@ -889,10 +879,7 @@ class _HomeScreenState extends State<HomeScreen>
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [
-                    color,
-                    color.withOpacity(0.7),
-                  ],
+                  colors: [color, color.withOpacity(0.7)],
                 ),
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
@@ -934,11 +921,7 @@ class _HomeScreenState extends State<HomeScreen>
                 color: color.withOpacity(0.1),
                 shape: BoxShape.circle,
               ),
-              child: Icon(
-                Icons.chevron_right,
-                color: color,
-                size: 24,
-              ),
+              child: Icon(Icons.chevron_right, color: color, size: 24),
             ),
           ],
         ),

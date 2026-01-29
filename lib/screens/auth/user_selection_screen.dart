@@ -160,7 +160,8 @@ class _UserSelectionScreenState extends State<UserSelectionScreen>
                           context,
                           icon: Icons.person_outline,
                           title: 'Guest User',
-                          subtitle: 'Browse and book travel packages without creating an account',
+                          subtitle:
+                              'Browse and book travel packages without creating an account',
                           gradient: LinearGradient(
                             colors: [
                               AppTheme.primaryColor.withOpacity(0.3),
@@ -173,7 +174,8 @@ class _UserSelectionScreenState extends State<UserSelectionScreen>
                             Navigator.pushReplacement(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => const GuestLandingScreen(),
+                                builder: (context) =>
+                                    const GuestLandingScreen(),
                               ),
                             );
                           },
@@ -183,7 +185,8 @@ class _UserSelectionScreenState extends State<UserSelectionScreen>
                           context,
                           icon: Icons.person,
                           title: 'Regular User',
-                          subtitle: 'Login to access your trips, itineraries, and travel planning features',
+                          subtitle:
+                              'Login to access your trips, itineraries, and travel planning features',
                           gradient: LinearGradient(
                             colors: [
                               AppTheme.secondaryColor.withOpacity(0.3),
@@ -232,17 +235,18 @@ class _UserSelectionScreenState extends State<UserSelectionScreen>
                           subtitle: 'System-level control and management',
                           gradient: LinearGradient(
                             colors: [
-                              Colors.deepPurple.withOpacity(0.3),
-                              Colors.deepPurple.withOpacity(0.1),
+                              const Color(0xFF1A1A2E).withOpacity(0.3),
+                              const Color(0xFF1A1A2E).withOpacity(0.1),
                             ],
                           ),
-                          iconColor: Colors.deepPurple,
+                          iconColor: const Color(0xFF3F51B5), // Indigo
                           delay: const Duration(milliseconds: 700),
                           onTap: () {
                             Navigator.pushReplacement(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => const SuperAdminLoginScreen(),
+                                builder: (context) =>
+                                    const SuperAdminLoginScreen(),
                               ),
                             );
                           },
@@ -306,11 +310,7 @@ class _UserSelectionScreenState extends State<UserSelectionScreen>
                   ),
                 ],
               ),
-              child: Icon(
-                icon,
-                size: 32,
-                color: Colors.white,
-              ),
+              child: Icon(icon, size: 32, color: Colors.white),
             ),
             const SizedBox(width: 16),
             Expanded(
