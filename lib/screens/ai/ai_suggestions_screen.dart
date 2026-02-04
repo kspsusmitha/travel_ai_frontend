@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../theme/app_theme.dart';
 import '../../models/user.dart';
+import '../../models/ai_response.dart';
+import '../../services/api_service.dart';
 import '../../common_widgets/glassmorphism.dart';
 
 class AISuggestionsScreen extends StatefulWidget {
@@ -19,7 +21,7 @@ class _AISuggestionsScreenState extends State<AISuggestionsScreen>
   String _selectedSuggestionType = 'day_plan';
   UserType? _selectedTravelerType;
   bool _isLoading = false;
-  String? _aiResponseText;
+  AIResponse? _aiResponse;
   String? _errorMessage;
 
   @override
@@ -52,7 +54,8 @@ class _AISuggestionsScreenState extends State<AISuggestionsScreen>
       return;
     }
 
-    if (_selectedSuggestionType == 'day_plan' || _selectedSuggestionType == 'budget') {
+    if (_selectedSuggestionType == 'day_plan' ||
+        _selectedSuggestionType == 'budget') {
       if (_durationController.text.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -87,83 +90,31 @@ class _AISuggestionsScreenState extends State<AISuggestionsScreen>
     setState(() {
       _isLoading = true;
       _errorMessage = null;
-      _aiResponseText = null;
+      _aiResponse = null;
     });
 
-    // Simulate API call delay
-    await Future.delayed(const Duration(seconds: 2));
+    try {
+      final String prompt =
+          "I want a ${_selectedSuggestionType.replaceAll('_', ' ')} for ${_destinationController.text}. "
+          "Duration: ${_durationController.text} days. "
+          "Budget: \$${_budgetController.text}. "
+          "Traveler Type: ${_selectedTravelerType?.displayName}.";
 
-    // TODO: Implement API call with:
-    // - Destination: _destinationController.text
-    // - Days: int.parse(_durationController.text)
-    // - Budget: double.parse(_budgetController.text)
-    // - Traveler Type: _selectedTravelerType
-    
-    setState(() {
-      _aiResponseText = _buildMockResponse();
-      _isLoading = false;
-    });
-  }
+      final response = await ApiService.aiCommunication(
+        prompt: prompt,
+        latitude: 0.0,
+        longitude: 0.0,
+      );
 
-  String _buildMockResponse() {
-    final travelerType = _selectedTravelerType!.displayName;
-    final destination = _destinationController.text;
-    final days = _durationController.text.isEmpty ? '7' : _durationController.text;
-    final budget = _budgetController.text;
-    
-    if (_selectedSuggestionType == 'day_plan') {
-      return '''
-Optimized ${days}-Day Itinerary for $destination
-Traveler Type: $travelerType
-
-Day 1: Arrival & City Exploration
-- Morning: Check-in at recommended hotel
-- Afternoon: City center walking tour
-- Evening: Local cuisine experience
-
-Day 2: Main Attractions
-- Morning: Visit top landmarks
-- Afternoon: Museum or cultural site
-- Evening: Relaxation time
-
-Budget Distribution:
-- Accommodation: \$${(double.parse(budget) * 0.4).toStringAsFixed(0)}
-- Activities: \$${(double.parse(budget) * 0.3).toStringAsFixed(0)}
-- Food: \$${(double.parse(budget) * 0.2).toStringAsFixed(0)}
-- Transportation: \$${(double.parse(budget) * 0.1).toStringAsFixed(0)}
-
-Note: This is a sample itinerary. Full AI-powered suggestions will be available after API integration.
-''';
-    } else if (_selectedSuggestionType == 'budget') {
-      return '''
-Budget Breakdown for $destination
-Traveler Type: $travelerType
-Total Budget: \$$budget
-
-Recommended Allocation:
-- Accommodation (40%): \$${(double.parse(budget) * 0.4).toStringAsFixed(0)}
-- Activities & Tours (30%): \$${(double.parse(budget) * 0.3).toStringAsFixed(0)}
-- Food & Dining (20%): \$${(double.parse(budget) * 0.2).toStringAsFixed(0)}
-- Transportation (10%): \$${(double.parse(budget) * 0.1).toStringAsFixed(0)}
-
-Daily Budget: \$${(double.parse(budget) / (days.isEmpty ? 7 : int.parse(days))).toStringAsFixed(0)} per day
-
-Note: Budget allocation optimized for $travelerType preferences.
-''';
-    } else {
-      return '''
-Best Time to Visit $destination
-
-Recommended Seasons:
-- Spring (March-May): Mild weather, fewer crowds
-- Fall (September-November): Pleasant temperatures, good for outdoor activities
-
-Traveler Type Considerations for $travelerType:
-- Optimal travel periods based on your preferences
-- Weather conditions suitable for your travel style
-
-Note: Full AI-powered recommendations will be available after API integration.
-''';
+      setState(() {
+        _aiResponse = response;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _errorMessage = e.toString();
+        _isLoading = false;
+      });
     }
   }
 
@@ -188,10 +139,7 @@ Note: Full AI-powered recommendations will be available after API integration.
             Container(
               decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [
-                    AppTheme.primaryColor,
-                    AppTheme.secondaryColor,
-                  ],
+                  colors: [AppTheme.primaryColor, AppTheme.secondaryColor],
                 ),
                 boxShadow: [
                   BoxShadow(
@@ -250,7 +198,9 @@ Note: Full AI-powered recommendations will be available after API integration.
                                 shape: BoxShape.circle,
                                 boxShadow: [
                                   BoxShadow(
-                                    color: AppTheme.primaryColor.withOpacity(0.4),
+                                    color: AppTheme.primaryColor.withOpacity(
+                                      0.4,
+                                    ),
                                     blurRadius: 12,
                                     spreadRadius: 2,
                                   ),
@@ -311,18 +261,26 @@ Note: Full AI-powered recommendations will be available after API integration.
                           children: [
                             Text(
                               'What would you like suggestions for?',
-                              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                  ),
+                              style: Theme.of(context).textTheme.titleMedium
+                                  ?.copyWith(fontWeight: FontWeight.bold),
                             ),
                             const SizedBox(height: 16),
                             Wrap(
                               spacing: 12,
                               runSpacing: 12,
                               children: [
-                                _buildSuggestionTypeChip('Best Time to Visit', 'best_time'),
-                                _buildSuggestionTypeChip('Day-wise Plan', 'day_plan'),
-                                _buildSuggestionTypeChip('Budget Breakdown', 'budget'),
+                                _buildSuggestionTypeChip(
+                                  'Best Time to Visit',
+                                  'best_time',
+                                ),
+                                _buildSuggestionTypeChip(
+                                  'Day-wise Plan',
+                                  'day_plan',
+                                ),
+                                _buildSuggestionTypeChip(
+                                  'Budget Breakdown',
+                                  'budget',
+                                ),
                               ],
                             ),
                           ],
@@ -351,23 +309,25 @@ Note: Full AI-powered recommendations will be available after API integration.
                           children: [
                             Text(
                               'Traveler Type',
-                              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                  ),
+                              style: Theme.of(context).textTheme.titleMedium
+                                  ?.copyWith(fontWeight: FontWeight.bold),
                             ),
                             const SizedBox(height: 16),
                             Wrap(
                               spacing: 8,
                               runSpacing: 8,
                               children: UserType.values.map((type) {
-                                final isSelected = _selectedTravelerType == type;
+                                final isSelected =
+                                    _selectedTravelerType == type;
                                 return Container(
                                   padding: const EdgeInsets.all(2),
                                   decoration: BoxDecoration(
                                     gradient: isSelected
                                         ? LinearGradient(
                                             colors: [
-                                              const Color(0xFF1976D2), // Darker blue
+                                              const Color(
+                                                0xFF1976D2,
+                                              ), // Darker blue
                                               AppTheme.primaryColor,
                                             ],
                                             begin: Alignment.topLeft,
@@ -383,32 +343,41 @@ Note: Full AI-powered recommendations will be available after API integration.
                                     border: Border.all(
                                       color: isSelected
                                           ? Colors.transparent
-                                          : AppTheme.primaryColor.withOpacity(0.4),
+                                          : AppTheme.primaryColor.withOpacity(
+                                              0.4,
+                                            ),
                                       width: 2,
                                     ),
                                     boxShadow: isSelected
                                         ? [
                                             BoxShadow(
-                                              color: AppTheme.primaryColor.withOpacity(0.5),
+                                              color: AppTheme.primaryColor
+                                                  .withOpacity(0.5),
                                               blurRadius: 12,
                                               offset: const Offset(0, 4),
                                             ),
                                           ]
                                         : [
                                             BoxShadow(
-                                              color: Colors.black.withOpacity(0.1),
+                                              color: Colors.black.withOpacity(
+                                                0.1,
+                                              ),
                                               blurRadius: 4,
                                               offset: const Offset(0, 2),
                                             ),
                                           ],
                                   ),
                                   child: Padding(
-                                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 4,
+                                    ),
                                     child: FilterChip(
                                       avatar: Icon(
                                         type.icon,
                                         size: 18,
-                                        color: isSelected ? Colors.white : AppTheme.primaryColor,
+                                        color: isSelected
+                                            ? Colors.white
+                                            : AppTheme.primaryColor,
                                       ),
                                       label: Padding(
                                         padding: const EdgeInsets.only(left: 4),
@@ -418,8 +387,9 @@ Note: Full AI-powered recommendations will be available after API integration.
                                             color: isSelected
                                                 ? Colors.white
                                                 : AppTheme.textPrimary,
-                                            fontWeight:
-                                                isSelected ? FontWeight.bold : FontWeight.w600,
+                                            fontWeight: isSelected
+                                                ? FontWeight.bold
+                                                : FontWeight.w600,
                                             fontSize: 14,
                                           ),
                                         ),
@@ -427,7 +397,9 @@ Note: Full AI-powered recommendations will be available after API integration.
                                       selected: isSelected,
                                       onSelected: (selected) {
                                         setState(() {
-                                          _selectedTravelerType = selected ? type : null;
+                                          _selectedTravelerType = selected
+                                              ? type
+                                              : null;
                                         });
                                       },
                                       selectedColor: Colors.transparent,
@@ -495,7 +467,8 @@ Note: Full AI-powered recommendations will be available after API integration.
                                 labelText: 'Budget (Money in Hand) *',
                                 hintText: 'e.g., 5000',
                                 prefixIcon: Icon(Icons.account_balance_wallet),
-                                helperText: 'Total amount available for the trip',
+                                helperText:
+                                    'Total amount available for the trip',
                               ),
                             ),
                             const SizedBox(height: 24),
@@ -511,7 +484,9 @@ Note: Full AI-powered recommendations will be available after API integration.
                                 borderRadius: BorderRadius.circular(12),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: AppTheme.primaryColor.withOpacity(0.4),
+                                    color: AppTheme.primaryColor.withOpacity(
+                                      0.4,
+                                    ),
                                     blurRadius: 15,
                                     offset: const Offset(0, 5),
                                   ),
@@ -526,7 +501,9 @@ Note: Full AI-powered recommendations will be available after API integration.
                                         child: CircularProgressIndicator(
                                           strokeWidth: 2,
                                           valueColor:
-                                              AlwaysStoppedAnimation<Color>(Colors.white),
+                                              AlwaysStoppedAnimation<Color>(
+                                                Colors.white,
+                                              ),
                                         ),
                                       )
                                     : const Icon(Icons.auto_awesome),
@@ -542,7 +519,9 @@ Note: Full AI-powered recommendations will be available after API integration.
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: Colors.transparent,
                                   shadowColor: Colors.transparent,
-                                  padding: const EdgeInsets.symmetric(vertical: 16),
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 16,
+                                  ),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(12),
                                   ),
@@ -554,7 +533,7 @@ Note: Full AI-powered recommendations will be available after API integration.
                       ),
                     ),
                     // AI Response
-                    if (_aiResponseText != null) ...[
+                    if (_aiResponse != null) ...[
                       const SizedBox(height: 24),
                       AnimatedGlassCard(
                         delay: const Duration(milliseconds: 400),
@@ -587,14 +566,12 @@ Note: Full AI-powered recommendations will be available after API integration.
                                     style: Theme.of(context)
                                         .textTheme
                                         .titleLarge
-                                        ?.copyWith(
-                                          fontWeight: FontWeight.bold,
-                                        ),
+                                        ?.copyWith(fontWeight: FontWeight.bold),
                                   ),
                                 ],
                               ),
                               const SizedBox(height: 16),
-                              _buildAISuggestionCard(_aiResponseText!),
+                              _buildAISuggestionCard(_aiResponse!),
                             ],
                           ),
                         ),
@@ -616,12 +593,17 @@ Note: Full AI-powered recommendations will be available after API integration.
                           ),
                           child: Row(
                             children: [
-                              Icon(Icons.error_outline, color: AppTheme.errorColor),
+                              Icon(
+                                Icons.error_outline,
+                                color: AppTheme.errorColor,
+                              ),
                               const SizedBox(width: 12),
                               Expanded(
                                 child: Text(
                                   _errorMessage!,
-                                  style: const TextStyle(color: AppTheme.errorColor),
+                                  style: const TextStyle(
+                                    color: AppTheme.errorColor,
+                                  ),
                                 ),
                               ),
                             ],
@@ -654,10 +636,7 @@ Note: Full AI-powered recommendations will be available after API integration.
                 end: Alignment.bottomRight,
               )
             : LinearGradient(
-                colors: [
-                  Colors.white,
-                  Colors.white.withOpacity(0.95),
-                ],
+                colors: [Colors.white, Colors.white.withOpacity(0.95)],
               ),
         borderRadius: BorderRadius.circular(25),
         border: Border.all(
@@ -713,10 +692,10 @@ Note: Full AI-powered recommendations will be available after API integration.
     );
   }
 
-  Widget _buildAISuggestionCard(String responseText) {
+  Widget _buildAISuggestionCard(AIResponse response) {
     IconData icon;
     String title;
-    
+
     switch (_selectedSuggestionType) {
       case 'best_time':
         icon = Icons.calendar_today;
@@ -724,7 +703,8 @@ Note: Full AI-powered recommendations will be available after API integration.
         break;
       case 'day_plan':
         icon = Icons.route;
-        title = '${_durationController.text.isNotEmpty ? _durationController.text : "7"}-Day Itinerary for ${_destinationController.text}';
+        title =
+            '${_durationController.text.isNotEmpty ? _durationController.text : "7"}-Day Itinerary for ${_destinationController.text}';
         break;
       case 'budget':
         icon = Icons.account_balance_wallet;
@@ -736,60 +716,85 @@ Note: Full AI-powered recommendations will be available after API integration.
     }
 
     return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(icon, color: AppTheme.primaryColor),
-                const SizedBox(width: 8),
-                Expanded(
+      elevation: 0,
+      color: Colors.transparent,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, color: AppTheme.primaryColor),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  title,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            response.text,
+            style: const TextStyle(color: AppTheme.textSecondary),
+          ),
+          if (response.sources.isNotEmpty) ...[
+            const SizedBox(height: 16),
+            const Text(
+              'Sources:',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+            ),
+            const SizedBox(height: 8),
+            ...response.sources.map(
+              (source) => Padding(
+                padding: const EdgeInsets.only(bottom: 4),
+                child: InkWell(
+                  onTap: () {
+                    // TODO: Open URL
+                  },
                   child: Text(
-                    title,
+                    '• ${source.title}',
                     style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
+                      color: AppTheme.primaryColor,
+                      decoration: TextDecoration.underline,
+                      fontSize: 12,
                     ),
                   ),
                 ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Text(
-              responseText,
-              style: const TextStyle(color: AppTheme.textSecondary),
-            ),
-            const SizedBox(height: 12),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                TextButton.icon(
-                  onPressed: () {
-                    // TODO: Save suggestion
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Suggestion saved')),
-                    );
-                  },
-                  icon: const Icon(Icons.bookmark_border),
-                  label: const Text('Save'),
-                ),
-                const SizedBox(width: 8),
-                ElevatedButton.icon(
-                  onPressed: () {
-                    // TODO: Apply to trip
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Applied to trip')),
-                    );
-                  },
-                  icon: const Icon(Icons.add),
-                  label: const Text('Apply'),
-                ),
-              ],
+              ),
             ),
           ],
-        ),
+          const SizedBox(height: 16),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              TextButton.icon(
+                onPressed: () {
+                  // TODO: Save suggestion
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Suggestion saved')),
+                  );
+                },
+                icon: const Icon(Icons.bookmark_border),
+                label: const Text('Save'),
+              ),
+              const SizedBox(width: 8),
+              ElevatedButton.icon(
+                onPressed: () {
+                  // TODO: Apply to trip
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Applied to trip')),
+                  );
+                },
+                icon: const Icon(Icons.add),
+                label: const Text('Apply'),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }

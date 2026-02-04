@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import '../../theme/app_theme.dart';
 import '../../common_widgets/glassmorphism.dart';
 import '../auth/login_screen.dart';
+import '../../services/api_service.dart';
+import '../../services/auth_service.dart';
+import '../../models/user.dart';
+import 'package:image_picker/image_picker.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -11,13 +15,77 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  // Mock user data
-  final String _userName = 'John Doe';
-  final String _userEmail = 'john.doe@example.com';
-  final String _userImage = ''; // Placeholder for profile image
+  User? _user;
+  bool _isLoading = true;
+  final ImagePicker _picker = ImagePicker();
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchProfile();
+  }
+
+  Future<void> _fetchProfile() async {
+    try {
+      final profileData = await ApiService.getProfile();
+      setState(() {
+        _user = User.fromJson(profileData);
+        _isLoading = false;
+      });
+    } catch (e) {
+      debugPrint('Error fetching profile: $e');
+      // If profile fails, try to use stored username
+      final username = await AuthService.getUsername();
+      setState(() {
+        _user = User(
+          id: '',
+          name: username ?? 'User',
+          email: '',
+          userType: UserType.soloTraveler,
+          createdAt: DateTime.now(),
+        );
+        _isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _pickImage() async {
+    try {
+      final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
+      if (image != null) {
+        setState(() => _isLoading = true);
+        await ApiService.updateProfile(imagePath: image.path);
+        await _fetchProfile(); // Refresh profile
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Profile picture updated!')),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to update picture: $e'),
+            backgroundColor: AppTheme.errorColor,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+
+    final String userName = _user?.name ?? 'User';
+    final String userEmail = _user?.email ?? '';
+    final String? userImage = _user?.profilePicture;
+
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
@@ -63,33 +131,62 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                     child: Column(
                       children: [
-                        Container(
-                          padding: const EdgeInsets.all(4),
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            border: Border.all(
-                              color: Colors.white.withOpacity(0.5),
-                              width: 2,
-                            ),
-                          ),
-                          child: CircleAvatar(
-                            radius: 50,
-                            backgroundColor: Colors.white,
-                            child: _userImage.isEmpty
-                                ? Text(
-                                    _userName[0].toUpperCase(),
-                                    style: const TextStyle(
-                                      fontSize: 40,
-                                      fontWeight: FontWeight.bold,
-                                      color: AppTheme.primaryColor,
-                                    ),
-                                  )
-                                : ClipOval(child: Image.network(_userImage)),
+                        GestureDetector(
+                          onTap: _pickImage,
+                          child: Stack(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(4),
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: Colors.white.withOpacity(0.5),
+                                    width: 2,
+                                  ),
+                                ),
+                                child: CircleAvatar(
+                                  radius: 50,
+                                  backgroundColor: Colors.white,
+                                  backgroundImage:
+                                      userImage != null && userImage.isNotEmpty
+                                      ? NetworkImage(userImage)
+                                      : null,
+                                  child: userImage == null || userImage.isEmpty
+                                      ? Text(
+                                          userName.isNotEmpty
+                                              ? userName[0].toUpperCase()
+                                              : 'U',
+                                          style: const TextStyle(
+                                            fontSize: 40,
+                                            fontWeight: FontWeight.bold,
+                                            color: AppTheme.primaryColor,
+                                          ),
+                                        )
+                                      : null,
+                                ),
+                              ),
+                              Positioned(
+                                bottom: 0,
+                                right: 0,
+                                child: Container(
+                                  padding: const EdgeInsets.all(4),
+                                  decoration: const BoxDecoration(
+                                    color: Colors.white,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(
+                                    Icons.camera_alt,
+                                    size: 20,
+                                    color: AppTheme.primaryColor,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                         const SizedBox(height: 16),
                         Text(
-                          _userName,
+                          userName,
                           style: const TextStyle(
                             fontSize: 24,
                             fontWeight: FontWeight.bold,
@@ -97,25 +194,27 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             letterSpacing: 0.5,
                           ),
                         ),
-                        const SizedBox(height: 4),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 6,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.2),
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Text(
-                            _userEmail,
-                            style: const TextStyle(
-                              fontSize: 14,
-                              color: Colors.white,
-                              fontWeight: FontWeight.w500,
+                        if (userEmail.isNotEmpty) ...[
+                          const SizedBox(height: 4),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 6,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.2),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Text(
+                              userEmail,
+                              style: const TextStyle(
+                                fontSize: 14,
+                                color: Colors.white,
+                                fontWeight: FontWeight.w500,
+                              ),
                             ),
                           ),
-                        ),
+                        ],
                         const SizedBox(height: 20),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceEvenly,

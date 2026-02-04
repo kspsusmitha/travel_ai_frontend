@@ -1,48 +1,136 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import '../../theme/app_theme.dart';
-import '../../utils/constants.dart';
-import '../../models/trip.dart';
-import '../../models/expense.dart';
+import '../../models/booking.dart';
+import '../../models/travel_activity.dart';
+import '../../models/accommodation.dart';
+import '../../models/travel_route.dart';
+import '../../services/api_service.dart';
 import '../itinerary/itinerary_builder_screen.dart';
-import '../budget/budget_planner_screen.dart';
 
 class TripDetailScreen extends StatefulWidget {
-  final Trip trip;
+  final Booking booking;
 
-  const TripDetailScreen({super.key, required this.trip});
+  const TripDetailScreen({super.key, required this.booking});
 
   @override
   State<TripDetailScreen> createState() => _TripDetailScreenState();
 }
 
 class _TripDetailScreenState extends State<TripDetailScreen> {
-  // Mock expenses data
-  final List<Expense> _expenses = [
-    Expense(
-      id: '1',
-      tripId: '1',
-      category: 'Accommodation',
-      description: 'Hotel booking',
-      amount: 500,
-      paidBy: 'User1',
-      sharedWith: ['User1', 'User2'],
-      date: DateTime.now(),
-      createdAt: DateTime.now(),
-    ),
-  ];
+  bool _isLoading = true;
+  String? _errorMessage;
+  List<TravelActivity> _activities = [];
+  List<Accommodation> _accommodations = [];
+  List<TravelRoute> _routes = [];
 
-  double get _totalExpenses => _expenses.fold(0, (sum, e) => sum + e.amount);
+  @override
+  void initState() {
+    super.initState();
+    _loadDetails();
+  }
+
+  Future<void> _loadDetails() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final List<Future> futures = [];
+
+      // Fetch Activities
+      if (widget.booking.bookedActivities != null) {
+        for (var ba in widget.booking.bookedActivities!) {
+          futures.add(ApiService.getActivity(ba.activityId));
+        }
+      }
+
+      // Fetch Accommodations
+      if (widget.booking.bookedAccommodations != null) {
+        for (var bacc in widget.booking.bookedAccommodations!) {
+          futures.add(ApiService.getAccommodation(bacc.accommodationId));
+        }
+      }
+
+      // Fetch Routes
+      if (widget.booking.bookedRoutes != null) {
+        for (var br in widget.booking.bookedRoutes!) {
+          futures.add(ApiService.getRoute(br.routeId));
+        }
+      }
+
+      final results = await Future.wait(futures);
+
+      int offset = 0;
+      if (widget.booking.bookedActivities != null) {
+        _activities = results
+            .sublist(offset, offset + widget.booking.bookedActivities!.length)
+            .cast<TravelActivity>();
+        offset += widget.booking.bookedActivities!.length;
+      }
+
+      if (widget.booking.bookedAccommodations != null) {
+        _accommodations = results
+            .sublist(
+              offset,
+              offset + widget.booking.bookedAccommodations!.length,
+            )
+            .cast<Accommodation>();
+        offset += widget.booking.bookedAccommodations!.length;
+      }
+
+      if (widget.booking.bookedRoutes != null) {
+        _routes = results
+            .sublist(offset, offset + widget.booking.bookedRoutes!.length)
+            .cast<TravelRoute>();
+      }
+
+      setState(() {
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _errorMessage = e.toString();
+        _isLoading = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return Scaffold(
+        appBar: AppBar(title: Text('Booking #${widget.booking.id}')),
+        body: const Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    if (_errorMessage != null) {
+      return Scaffold(
+        appBar: AppBar(title: Text('Booking #${widget.booking.id}')),
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text('Error: $_errorMessage', textAlign: TextAlign.center),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: _loadDetails,
+                child: const Text('Retry'),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     return DefaultTabController(
       length: 4,
       child: Scaffold(
         appBar: AppBar(
-          title: Text(widget.trip.name),
-          bottom: TabBar(
-            tabs: const [
+          title: Text('Booking #${widget.booking.id}'),
+          bottom: const TabBar(
+            tabs: [
               Tab(icon: Icon(Icons.info), text: 'Overview'),
               Tab(icon: Icon(Icons.route), text: 'Itinerary'),
               Tab(icon: Icon(Icons.receipt), text: 'Expenses'),
@@ -53,7 +141,12 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
         body: TabBarView(
           children: [
             _buildOverviewTab(),
-            ItineraryBuilderScreen(trip: widget.trip),
+            ItineraryBuilderScreen(
+              booking: widget.booking,
+              activities: _activities,
+              accommodations: _accommodations,
+              routes: _routes,
+            ),
             _buildExpensesTab(),
             _buildTravelersTab(),
           ],
@@ -68,240 +161,193 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Trip Info Card
+          // Booking Info Card
           Card(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(15),
+            ),
+            elevation: 4,
             child: Padding(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(20),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Icon(Icons.location_on, color: AppTheme.primaryColor),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          widget.trip.destination,
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
+                      const Text(
+                        'Booking Status',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: AppTheme.textSecondary,
                         ),
                       ),
+                      _buildStatusChip(widget.booking.status),
                     ],
+                  ),
+                  const Divider(height: 32),
+                  _buildInfoRow(
+                    Icons.account_balance_wallet,
+                    'Total Cost',
+                    '\$${widget.booking.totalCost.toStringAsFixed(2)}',
                   ),
                   const SizedBox(height: 16),
                   _buildInfoRow(
-                    Icons.calendar_today,
-                    'Duration',
-                    '${widget.trip.duration} days',
+                    Icons.payment,
+                    'Payment Status',
+                    widget.booking.paymentStatus.value.toUpperCase(),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 16),
                   _buildInfoRow(
-                    Icons.date_range,
-                    'Dates',
-                    '${DateFormat('MMM dd').format(widget.trip.startDate)} - ${DateFormat('MMM dd, yyyy').format(widget.trip.endDate)}',
+                    Icons.person,
+                    'User ID',
+                    widget.booking.userId?.toString() ?? 'Guest',
                   ),
-                  if (widget.trip.budget != null) ...[
-                    const SizedBox(height: 8),
-                    _buildInfoRow(
-                      Icons.account_balance_wallet,
-                      'Budget',
-                      '\$${widget.trip.budget!.toStringAsFixed(0)}',
-                    ),
-                  ],
                 ],
               ),
             ),
           ),
-          const SizedBox(height: 16),
-          // Quick Actions
+          const SizedBox(height: 24),
           Text(
-            'Quick Actions',
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
+            'Summary',
+            style: Theme.of(
+              context,
+            ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: _buildActionCard(
-                  icon: Icons.route,
-                  title: 'Itinerary',
-                  onTap: () {
-                    // Switch to itinerary tab
-                  },
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _buildActionCard(
-                  icon: Icons.account_balance_wallet,
-                  title: 'Budget',
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => BudgetPlannerScreen(trip: widget.trip),
-                      ),
-                    );
-                  },
-                ),
-              ),
-            ],
+          _buildSummaryItem(
+            Icons.local_activity,
+            'Activities',
+            '${_activities.length} items booked',
           ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: _buildActionCard(
-                  icon: Icons.hotel,
-                  title: 'Hotels',
-                  onTap: () {
-                    // TODO: Navigate to accommodation finder
-                  },
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _buildActionCard(
-                  icon: Icons.local_activity,
-                  title: 'Activities',
-                  onTap: () {
-                    // TODO: Navigate to activity finder
-                  },
-                ),
-              ),
-            ],
+          _buildSummaryItem(
+            Icons.hotel,
+            'Accommodations',
+            '${_accommodations.length} items booked',
           ),
-          if (widget.trip.description != null) ...[
-            const SizedBox(height: 24),
-            Text(
-              'Description',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-            ),
-            const SizedBox(height: 8),
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Text(widget.trip.description!),
-              ),
-            ),
-          ],
+          _buildSummaryItem(
+            Icons.directions,
+            'Routes',
+            '${_routes.length} items booked',
+          ),
         ],
       ),
+    );
+  }
+
+  Widget _buildSummaryItem(IconData icon, String title, String subtitle) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      child: ListTile(
+        leading: Icon(icon, color: AppTheme.primaryColor),
+        title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
+        subtitle: Text(subtitle),
+      ),
+    );
+  }
+
+  Widget _buildStatusChip(BookingStatus status) {
+    Color color;
+    switch (status) {
+      case BookingStatus.confirmed:
+        color = AppTheme.successColor;
+        break;
+      case BookingStatus.cancelled:
+        color = AppTheme.errorColor;
+        break;
+      default:
+        color = AppTheme.accentColor;
+    }
+    return Chip(
+      label: Text(
+        status.value.toUpperCase(),
+        style: const TextStyle(color: Colors.white, fontSize: 12),
+      ),
+      backgroundColor: color,
     );
   }
 
   Widget _buildExpensesTab() {
     return Column(
       children: [
-        // Summary Card
         Container(
-          padding: const EdgeInsets.all(16),
-          color: AppTheme.primaryColor.withOpacity(0.1),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
+          padding: const EdgeInsets.all(24),
+          width: double.infinity,
+          color: AppTheme.primaryColor.withValues(alpha: 0.1),
+          child: Column(
             children: [
-              Column(
-                children: [
-                  const Text(
-                    'Total Expenses',
-                    style: TextStyle(color: AppTheme.textSecondary),
-                  ),
-                  Text(
-                    '\$${_totalExpenses.toStringAsFixed(2)}',
-                    style: const TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: AppTheme.primaryColor,
-                    ),
-                  ),
-                ],
+              const Text(
+                'Total Booking Cost',
+                style: TextStyle(color: AppTheme.textSecondary),
               ),
-              if (widget.trip.budget != null)
-                Column(
-                  children: [
-                    const Text(
-                      'Remaining',
-                      style: TextStyle(color: AppTheme.textSecondary),
-                    ),
-                    Text(
-                      '\$${(widget.trip.budget! - _totalExpenses).toStringAsFixed(2)}',
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        color: (widget.trip.budget! - _totalExpenses) > 0
-                            ? AppTheme.successColor
-                            : AppTheme.errorColor,
-                      ),
-                    ),
-                  ],
+              const SizedBox(height: 8),
+              Text(
+                '\$${widget.booking.totalCost.toStringAsFixed(2)}',
+                style: const TextStyle(
+                  fontSize: 32,
+                  fontWeight: FontWeight.bold,
+                  color: AppTheme.primaryColor,
                 ),
+              ),
             ],
           ),
         ),
         Expanded(
-          child: _expenses.isEmpty
-              ? Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.receipt_long,
-                        size: 64,
-                        color: AppTheme.textSecondary,
-                      ),
-                      const SizedBox(height: 16),
-                      const Text(
-                        'No expenses yet',
-                        style: TextStyle(color: AppTheme.textSecondary),
-                      ),
-                    ],
+          child: ListView(
+            padding: const EdgeInsets.all(16),
+            children: [
+              if (_activities.isNotEmpty) ...[
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 8),
+                  child: Text(
+                    'Activities',
+                    style: TextStyle(fontWeight: FontWeight.bold),
                   ),
-                )
-              : ListView.builder(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: _expenses.length,
-                  itemBuilder: (context, index) {
-                    final expense = _expenses[index];
-                    return Card(
-                      margin: const EdgeInsets.only(bottom: 12),
-                      child: ListTile(
-                        leading: CircleAvatar(
-                          backgroundColor: AppTheme.primaryColor.withOpacity(0.1),
-                          child: Icon(
-                            _getCategoryIcon(expense.category),
-                            color: AppTheme.primaryColor,
-                          ),
-                        ),
-                        title: Text(expense.description),
-                        subtitle: Text(
-                          '${expense.category} • Paid by ${expense.paidBy}',
-                        ),
-                        trailing: Text(
-                          '\$${expense.amount.toStringAsFixed(2)}',
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
-                          ),
-                        ),
-                      ),
-                    );
-                  },
                 ),
-        ),
-        Padding(
-          padding: const EdgeInsets.all(16),
-          child: ElevatedButton.icon(
-            onPressed: () {
-              // TODO: Show add expense dialog
-            },
-            icon: const Icon(Icons.add),
-            label: const Text('Add Expense'),
+                ..._activities.map(
+                  (a) => ListTile(
+                    leading: const Icon(
+                      Icons.local_activity,
+                      color: Colors.blue,
+                    ),
+                    title: Text(a.name),
+                    trailing: Text('\$${a.cost.toStringAsFixed(2)}'),
+                  ),
+                ),
+              ],
+              if (_accommodations.isNotEmpty) ...[
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 8),
+                  child: Text(
+                    'Accommodations',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                ),
+                ..._accommodations.map(
+                  (a) => ListTile(
+                    leading: const Icon(Icons.hotel, color: Colors.green),
+                    title: Text(a.name),
+                    trailing: Text('\$${a.cost.toStringAsFixed(2)}'),
+                  ),
+                ),
+              ],
+              if (_routes.isNotEmpty) ...[
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 8),
+                  child: Text(
+                    'Routes',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                ),
+                ..._routes.map(
+                  (r) => ListTile(
+                    leading: const Icon(Icons.directions, color: Colors.orange),
+                    title: Text('${r.startLocation} → ${r.endLocation}'),
+                    trailing: Text('\$${r.cost.toStringAsFixed(2)}'),
+                  ),
+                ),
+              ],
+            ],
           ),
         ),
       ],
@@ -309,49 +355,16 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
   }
 
   Widget _buildTravelersTab() {
-    return ListView(
-      padding: const EdgeInsets.all(16),
-      children: [
-        Card(
-          child: Column(
-            children: widget.trip.travelers.map((traveler) {
-              return ListTile(
-                leading: CircleAvatar(
-                  child: Text(traveler[0].toUpperCase()),
-                ),
-                title: Text(traveler),
-                subtitle: traveler == widget.trip.createdBy
-                    ? const Text('Trip Creator')
-                    : null,
-                trailing: traveler == widget.trip.createdBy
-                    ? const Chip(
-                        label: Text('Admin'),
-                        backgroundColor: AppTheme.primaryColor,
-                      )
-                    : null,
-              );
-            }).toList(),
-          ),
-        ),
-        if (widget.trip.type == AppConstants.tripTypeGroup) ...[
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.people, size: 64, color: Colors.grey[400]),
           const SizedBox(height: 16),
-          ElevatedButton.icon(
-            onPressed: () {
-              // TODO: Show add traveler dialog
-            },
-            icon: const Icon(Icons.person_add),
-            label: const Text('Add Co-traveler'),
-          ),
-          const SizedBox(height: 8),
-          OutlinedButton.icon(
-            onPressed: () {
-              // TODO: Show share link dialog
-            },
-            icon: const Icon(Icons.link),
-            label: const Text('Share Invite Link'),
-          ),
+          const Text('Traveler information is handled in the trip creator.'),
+          const Text('For historical bookings, this data is read-only.'),
         ],
-      ],
+      ),
     );
   }
 
@@ -359,64 +372,10 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
     return Row(
       children: [
         Icon(icon, size: 20, color: AppTheme.textSecondary),
-        const SizedBox(width: 8),
-        Text(
-          '$label: ',
-          style: const TextStyle(color: AppTheme.textSecondary),
-        ),
-        Text(
-          value,
-          style: const TextStyle(fontWeight: FontWeight.w600),
-        ),
+        const SizedBox(width: 12),
+        Text('$label: ', style: const TextStyle(color: AppTheme.textSecondary)),
+        Text(value, style: const TextStyle(fontWeight: FontWeight.w600)),
       ],
     );
-  }
-
-  Widget _buildActionCard({
-    required IconData icon,
-    required String title,
-    required VoidCallback onTap,
-  }) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: AppTheme.primaryColor.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Column(
-          children: [
-            Icon(icon, size: 32, color: AppTheme.primaryColor),
-            const SizedBox(height: 8),
-            Text(
-              title,
-              style: const TextStyle(
-                fontWeight: FontWeight.w600,
-                color: AppTheme.primaryColor,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  IconData _getCategoryIcon(String category) {
-    switch (category.toLowerCase()) {
-      case 'accommodation':
-        return Icons.hotel;
-      case 'food':
-        return Icons.restaurant;
-      case 'transport':
-        return Icons.directions_car;
-      case 'activities':
-        return Icons.local_activity;
-      case 'shopping':
-        return Icons.shopping_bag;
-      default:
-        return Icons.category;
-    }
   }
 }

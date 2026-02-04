@@ -4,6 +4,8 @@ import '../../utils/constants.dart';
 import '../../models/user.dart';
 import '../../common_widgets/glassmorphism.dart';
 import '../home/home_screen.dart';
+import '../../services/api_service.dart';
+import '../../services/auth_service.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -54,35 +56,50 @@ class _LoginScreenState extends State<LoginScreen>
 
   Future<void> _handleLogin() async {
     if (_formKey.currentState!.validate()) {
-      if (_selectedUserType == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Please select your user type'),
-            backgroundColor: AppTheme.errorColor,
-          ),
-        );
-        return;
-      }
-
       setState(() {
         _isLoading = true;
       });
 
-      // Simulate API call delay
-      await Future.delayed(const Duration(seconds: 1));
-
-      // TODO: Implement API call
-      if (mounted) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const HomeScreen()),
+      try {
+        final response = await ApiService.login(
+          username: _usernameController.text.trim(),
+          password: _passwordController.text,
         );
-      }
 
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
+        // Save auth data
+        await AuthService.saveAuthData(
+          token: response.token,
+          userId: response.userId,
+          username: response.username,
+        );
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Welcome back, ${response.username}!'),
+              backgroundColor: AppTheme.primaryColor,
+            ),
+          );
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const HomeScreen()),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(e.toString().replaceAll('Exception: ', '')),
+              backgroundColor: AppTheme.errorColor,
+            ),
+          );
+        }
+      } finally {
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+          });
+        }
       }
     }
   }

@@ -1,4 +1,4 @@
- import 'dart:convert';
+import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import '../models/auth_response.dart';
@@ -8,46 +8,9 @@ import '../models/travel_route.dart';
 import '../models/booking.dart';
 import '../models/ai_response.dart';
 import 'auth_service.dart';
+import '../config/api_config.dart';
 
 class ApiService {
-  // Get base URL based on platform
-  // Android Emulator: Use 10.0.2.2 to access host machine's localhost
-  // iOS Simulator: Use 127.0.0.1 (localhost works)
-  // Physical Devices: Use your computer's IP address (e.g., 192.168.x.x)
-  // Web: Use localhost or your server's public URL
-  static String get baseUrl {
-    String url;
-
-    if (kIsWeb) {
-      // For web platform, use localhost
-      url = 'http://127.0.0.1:8000';
-      debugPrint('🌐 Platform: Web - Using baseUrl: $url');
-    } else {
-      // For mobile platforms, check using defaultTargetPlatform
-      switch (defaultTargetPlatform) {
-        case TargetPlatform.android:
-          // For Android emulator, use 10.0.2.2 to access host machine
-          // For physical Android device, replace with your computer's IP address
-          url = 'http://10.0.2.2:8000';
-          debugPrint('🤖 Platform: Android - Using baseUrl: $url');
-          break;
-        case TargetPlatform.iOS:
-          // iOS simulator can use localhost
-          url = 'http://127.0.0.1:8000';
-          debugPrint('🍎 Platform: iOS - Using baseUrl: $url');
-          break;
-        default:
-          // For desktop platforms (Windows, macOS, Linux), use localhost
-          url = 'http://127.0.0.1:8000';
-          debugPrint('💻 Platform: Desktop - Using baseUrl: $url');
-      }
-    }
-
-    return url;
-  }
-
-  static const String apiPrefix = '/api';
-
   // Helper method to get headers
   static Future<Map<String, String>> _getHeaders({
     bool authRequired = false,
@@ -115,7 +78,7 @@ class ApiService {
     String? firstName,
   }) async {
     try {
-      final url = Uri.parse('$baseUrl$apiPrefix/auth/register/');
+      final url = Uri.parse(ApiConfig.register);
       final body = <String, dynamic>{
         'username': username,
         'password': password,
@@ -160,9 +123,7 @@ class ApiService {
         debugPrint(
           '💡 Tip: Run Django with: python manage.py runserver 0.0.0.0:8000',
         );
-        debugPrint(
-          '💡 Tip: Check if URL is correct: $baseUrl$apiPrefix/auth/register/',
-        );
+        debugPrint('💡 Tip: Check if URL is correct: ${ApiConfig.register}');
       }
       rethrow;
     }
@@ -173,7 +134,7 @@ class ApiService {
     required String password,
   }) async {
     try {
-      final url = Uri.parse('$baseUrl$apiPrefix/auth/login/');
+      final url = Uri.parse(ApiConfig.login);
       final body = {'username': username, 'password': password};
 
       debugPrint('📤 API Request - POST $url');
@@ -204,7 +165,7 @@ class ApiService {
     double? radius,
   }) async {
     try {
-      final url = Uri.parse('$baseUrl$apiPrefix/activities/').replace(
+      final url = Uri.parse(ApiConfig.activities).replace(
         queryParameters: {
           if (search != null && search.isNotEmpty) 'search': search,
           if (minCost != null) 'min_cost': minCost.toString(),
@@ -234,12 +195,106 @@ class ApiService {
   }
 
   static Future<TravelActivity> getActivity(int id) async {
-    final url = Uri.parse('$baseUrl$apiPrefix/activities/$id/');
+    final url = Uri.parse(ApiConfig.activityDetail(id));
 
     final response = await http.get(url, headers: await _getHeaders());
 
     final data = _handleResponse(response);
     return TravelActivity.fromJson(data as Map<String, dynamic>);
+  }
+
+  static Future<TravelActivity> createActivity({
+    required String name,
+    required String description,
+    required double cost,
+    required double latitude,
+    required double longitude,
+    String? imageUrl,
+  }) async {
+    try {
+      final url = Uri.parse(ApiConfig.activities);
+      final body = <String, dynamic>{
+        'name': name,
+        'description': description,
+        'cost': cost,
+        'latitude': latitude,
+        'longitude': longitude,
+        if (imageUrl != null && imageUrl.isNotEmpty) 'image_url': imageUrl,
+      };
+
+      debugPrint('📤 API Request - POST $url');
+      debugPrint('📤 Request body: ${json.encode(body)}');
+
+      final response = await http.post(
+        url,
+        headers: await _getHeaders(authRequired: true),
+        body: json.encode(body),
+      );
+
+      debugPrint('📥 API Response - Status: ${response.statusCode}');
+      final data = _handleResponse(response);
+      return TravelActivity.fromJson(data as Map<String, dynamic>);
+    } catch (e) {
+      debugPrint('❌ Network Error - Create Activity: $e');
+      rethrow;
+    }
+  }
+
+  static Future<TravelActivity> updateActivity({
+    required int id,
+    String? name,
+    String? description,
+    double? cost,
+    double? latitude,
+    double? longitude,
+    String? imageUrl,
+  }) async {
+    try {
+      final url = Uri.parse(ApiConfig.activityDetail(id));
+      final body = <String, dynamic>{};
+
+      if (name != null) body['name'] = name;
+      if (description != null) body['description'] = description;
+      if (cost != null) body['cost'] = cost;
+      if (latitude != null) body['latitude'] = latitude;
+      if (longitude != null) body['longitude'] = longitude;
+      if (imageUrl != null) body['image_url'] = imageUrl;
+
+      debugPrint('📤 API Request - PATCH $url');
+      debugPrint('📤 Request body: ${json.encode(body)}');
+
+      final response = await http.patch(
+        url,
+        headers: await _getHeaders(authRequired: true),
+        body: json.encode(body),
+      );
+
+      debugPrint('📥 API Response - Status: ${response.statusCode}');
+      final data = _handleResponse(response);
+      return TravelActivity.fromJson(data as Map<String, dynamic>);
+    } catch (e) {
+      debugPrint('❌ Network Error - Update Activity: $e');
+      rethrow;
+    }
+  }
+
+  static Future<void> deleteActivity(int id) async {
+    try {
+      final url = Uri.parse(ApiConfig.activityDetail(id));
+
+      debugPrint('📤 API Request - DELETE $url');
+
+      final response = await http.delete(
+        url,
+        headers: await _getHeaders(authRequired: true),
+      );
+
+      debugPrint('📥 API Response - Status: ${response.statusCode}');
+      _handleResponse(response);
+    } catch (e) {
+      debugPrint('❌ Network Error - Delete Activity: $e');
+      rethrow;
+    }
   }
 
   // Accommodations APIs
@@ -252,7 +307,7 @@ class ApiService {
     double? radius,
   }) async {
     try {
-      final url = Uri.parse('$baseUrl$apiPrefix/accommodations/').replace(
+      final url = Uri.parse(ApiConfig.accommodations).replace(
         queryParameters: {
           if (search != null && search.isNotEmpty) 'search': search,
           if (minCost != null) 'min_cost': minCost.toString(),
@@ -282,12 +337,106 @@ class ApiService {
   }
 
   static Future<Accommodation> getAccommodation(int id) async {
-    final url = Uri.parse('$baseUrl$apiPrefix/accommodations/$id/');
+    final url = Uri.parse(ApiConfig.accommodationDetail(id));
 
     final response = await http.get(url, headers: await _getHeaders());
 
     final data = _handleResponse(response);
     return Accommodation.fromJson(data as Map<String, dynamic>);
+  }
+
+  static Future<Accommodation> createAccommodation({
+    required String name,
+    required String description,
+    required double costPerNight,
+    required double latitude,
+    required double longitude,
+    String? imageUrl,
+  }) async {
+    try {
+      final url = Uri.parse(ApiConfig.accommodations);
+      final body = <String, dynamic>{
+        'name': name,
+        'description': description,
+        'cost_per_night': costPerNight,
+        'latitude': latitude,
+        'longitude': longitude,
+        if (imageUrl != null && imageUrl.isNotEmpty) 'image_url': imageUrl,
+      };
+
+      debugPrint('📤 API Request - POST $url');
+      debugPrint('📤 Request body: ${json.encode(body)}');
+
+      final response = await http.post(
+        url,
+        headers: await _getHeaders(authRequired: true),
+        body: json.encode(body),
+      );
+
+      debugPrint('📥 API Response - Status: ${response.statusCode}');
+      final data = _handleResponse(response);
+      return Accommodation.fromJson(data as Map<String, dynamic>);
+    } catch (e) {
+      debugPrint('❌ Network Error - Create Accommodation: $e');
+      rethrow;
+    }
+  }
+
+  static Future<Accommodation> updateAccommodation({
+    required int id,
+    String? name,
+    String? description,
+    double? costPerNight,
+    double? latitude,
+    double? longitude,
+    String? imageUrl,
+  }) async {
+    try {
+      final url = Uri.parse(ApiConfig.accommodationDetail(id));
+      final body = <String, dynamic>{};
+
+      if (name != null) body['name'] = name;
+      if (description != null) body['description'] = description;
+      if (costPerNight != null) body['cost_per_night'] = costPerNight;
+      if (latitude != null) body['latitude'] = latitude;
+      if (longitude != null) body['longitude'] = longitude;
+      if (imageUrl != null) body['image_url'] = imageUrl;
+
+      debugPrint('📤 API Request - PATCH $url');
+      debugPrint('📤 Request body: ${json.encode(body)}');
+
+      final response = await http.patch(
+        url,
+        headers: await _getHeaders(authRequired: true),
+        body: json.encode(body),
+      );
+
+      debugPrint('📥 API Response - Status: ${response.statusCode}');
+      final data = _handleResponse(response);
+      return Accommodation.fromJson(data as Map<String, dynamic>);
+    } catch (e) {
+      debugPrint('❌ Network Error - Update Accommodation: $e');
+      rethrow;
+    }
+  }
+
+  static Future<void> deleteAccommodation(int id) async {
+    try {
+      final url = Uri.parse(ApiConfig.accommodationDetail(id));
+
+      debugPrint('📤 API Request - DELETE $url');
+
+      final response = await http.delete(
+        url,
+        headers: await _getHeaders(authRequired: true),
+      );
+
+      debugPrint('📥 API Response - Status: ${response.statusCode}');
+      _handleResponse(response);
+    } catch (e) {
+      debugPrint('❌ Network Error - Delete Accommodation: $e');
+      rethrow;
+    }
   }
 
   // Routes APIs
@@ -299,7 +448,7 @@ class ApiService {
     double? lng,
     double? radius,
   }) async {
-    final url = Uri.parse('$baseUrl$apiPrefix/routes/').replace(
+    final url = Uri.parse(ApiConfig.routes).replace(
       queryParameters: {
         if (search != null && search.isNotEmpty) 'search': search,
         if (minCost != null) 'min_cost': minCost.toString(),
@@ -322,7 +471,7 @@ class ApiService {
   }
 
   static Future<TravelRoute> getRoute(int id) async {
-    final url = Uri.parse('$baseUrl$apiPrefix/routes/$id/');
+    final url = Uri.parse(ApiConfig.routeDetail(id));
 
     final response = await http.get(url, headers: await _getHeaders());
 
@@ -330,12 +479,114 @@ class ApiService {
     return TravelRoute.fromJson(data as Map<String, dynamic>);
   }
 
+  static Future<TravelRoute> createRoute({
+    required String name,
+    required String description,
+    required double cost,
+    required double startLatitude,
+    required double startLongitude,
+    required double endLatitude,
+    required double endLongitude,
+    String? imageUrl,
+  }) async {
+    try {
+      final url = Uri.parse(ApiConfig.routes);
+      final body = <String, dynamic>{
+        'name': name,
+        'description': description,
+        'cost': cost,
+        'start_latitude': startLatitude,
+        'start_longitude': startLongitude,
+        'end_latitude': endLatitude,
+        'end_longitude': endLongitude,
+        if (imageUrl != null && imageUrl.isNotEmpty) 'image_url': imageUrl,
+      };
+
+      debugPrint('📤 API Request - POST $url');
+      debugPrint('📤 Request body: ${json.encode(body)}');
+
+      final response = await http.post(
+        url,
+        headers: await _getHeaders(authRequired: true),
+        body: json.encode(body),
+      );
+
+      debugPrint('📥 API Response - Status: ${response.statusCode}');
+      final data = _handleResponse(response);
+      return TravelRoute.fromJson(data as Map<String, dynamic>);
+    } catch (e) {
+      debugPrint('❌ Network Error - Create Route: $e');
+      rethrow;
+    }
+  }
+
+  static Future<TravelRoute> updateRoute({
+    required int id,
+    String? name,
+    String? description,
+    double? cost,
+    double? startLatitude,
+    double? startLongitude,
+    double? endLatitude,
+    double? endLongitude,
+    String? imageUrl,
+  }) async {
+    try {
+      final url = Uri.parse(ApiConfig.routeDetail(id));
+      final body = <String, dynamic>{};
+
+      if (name != null) body['name'] = name;
+      if (description != null) body['description'] = description;
+      if (cost != null) body['cost'] = cost;
+      if (startLatitude != null) body['start_latitude'] = startLatitude;
+      if (startLongitude != null) body['start_longitude'] = startLongitude;
+      if (endLatitude != null) body['end_latitude'] = endLatitude;
+      if (endLongitude != null) body['end_longitude'] = endLongitude;
+      if (imageUrl != null) body['image_url'] = imageUrl;
+
+      debugPrint('📤 API Request - PATCH $url');
+      debugPrint('📤 Request body: ${json.encode(body)}');
+
+      final response = await http.patch(
+        url,
+        headers: await _getHeaders(authRequired: true),
+        body: json.encode(body),
+      );
+
+      debugPrint('📥 API Response - Status: ${response.statusCode}');
+      final data = _handleResponse(response);
+      return TravelRoute.fromJson(data as Map<String, dynamic>);
+    } catch (e) {
+      debugPrint('❌ Network Error - Update Route: $e');
+      rethrow;
+    }
+  }
+
+  static Future<void> deleteRoute(int id) async {
+    try {
+      final url = Uri.parse(ApiConfig.routeDetail(id));
+
+      debugPrint('📤 API Request - DELETE $url');
+
+      final response = await http.delete(
+        url,
+        headers: await _getHeaders(authRequired: true),
+      );
+
+      debugPrint('📥 API Response - Status: ${response.statusCode}');
+      _handleResponse(response);
+    } catch (e) {
+      debugPrint('❌ Network Error - Delete Route: $e');
+      rethrow;
+    }
+  }
+
   // Bookings APIs
   static Future<List<Booking>> getBookings({
     String? status,
     String? paymentStatus,
   }) async {
-    final url = Uri.parse('$baseUrl$apiPrefix/bookings/').replace(
+    final url = Uri.parse(ApiConfig.bookings).replace(
       queryParameters: {
         if (status != null && status.isNotEmpty) 'status': status,
         if (paymentStatus != null && paymentStatus.isNotEmpty)
@@ -355,7 +606,7 @@ class ApiService {
   }
 
   static Future<Booking> getBooking(int id) async {
-    final url = Uri.parse('$baseUrl$apiPrefix/bookings/$id/');
+    final url = Uri.parse(ApiConfig.bookingDetail(id));
 
     final response = await http.get(url, headers: await _getHeaders());
 
@@ -371,7 +622,7 @@ class ApiService {
     String? status,
     String? paymentStatus,
   }) async {
-    final url = Uri.parse('$baseUrl$apiPrefix/bookings/');
+    final url = Uri.parse(ApiConfig.bookings);
     final body = <String, dynamic>{};
 
     if (userId != null) body['user_id'] = userId;
@@ -399,16 +650,78 @@ class ApiService {
     return Booking.fromJson(data as Map<String, dynamic>);
   }
 
+  static Future<Booking> updateBooking({
+    required int id,
+    String? status,
+    String? paymentStatus,
+    List<int>? activityIds,
+    List<int>? routeIds,
+    List<int>? accommodationIds,
+  }) async {
+    try {
+      final url = Uri.parse(ApiConfig.bookingDetail(id));
+      final body = <String, dynamic>{};
+
+      if (status != null && status.isNotEmpty) body['status'] = status;
+      if (paymentStatus != null && paymentStatus.isNotEmpty) {
+        body['payment_status'] = paymentStatus;
+      }
+      if (activityIds != null && activityIds.isNotEmpty) {
+        body['activity_ids'] = activityIds;
+      }
+      if (routeIds != null && routeIds.isNotEmpty) {
+        body['route_ids'] = routeIds;
+      }
+      if (accommodationIds != null && accommodationIds.isNotEmpty) {
+        body['accommodation_ids'] = accommodationIds;
+      }
+
+      debugPrint('📤 API Request - PATCH $url');
+      debugPrint('📤 Request body: ${json.encode(body)}');
+
+      final response = await http.patch(
+        url,
+        headers: await _getHeaders(authRequired: true),
+        body: json.encode(body),
+      );
+
+      debugPrint('📥 API Response - Status: ${response.statusCode}');
+      final data = _handleResponse(response);
+      return Booking.fromJson(data as Map<String, dynamic>);
+    } catch (e) {
+      debugPrint('❌ Network Error - Update Booking: $e');
+      rethrow;
+    }
+  }
+
+  static Future<void> deleteBooking(int id) async {
+    try {
+      final url = Uri.parse(ApiConfig.bookingDetail(id));
+
+      debugPrint('📤 API Request - DELETE $url');
+
+      final response = await http.delete(
+        url,
+        headers: await _getHeaders(authRequired: true),
+      );
+
+      debugPrint('📥 API Response - Status: ${response.statusCode}');
+      _handleResponse(response);
+    } catch (e) {
+      debugPrint('❌ Network Error - Delete Booking: $e');
+      rethrow;
+    }
+  }
+
   // Booking Accommodations APIs
   static Future<List<BookingAccommodation>> getBookingAccommodations({
     int? bookingId,
   }) async {
-    final url = Uri.parse('$baseUrl$apiPrefix/bookings/accommodations/')
-        .replace(
-          queryParameters: {
-            if (bookingId != null) 'booking_id': bookingId.toString(),
-          },
-        );
+    final url = Uri.parse(ApiConfig.bookingAccommodations).replace(
+      queryParameters: {
+        if (bookingId != null) 'booking_id': bookingId.toString(),
+      },
+    );
 
     final response = await http.get(url, headers: await _getHeaders());
 
@@ -422,7 +735,7 @@ class ApiService {
   }
 
   static Future<BookingAccommodation> getBookingAccommodation(int id) async {
-    final url = Uri.parse('$baseUrl$apiPrefix/bookings/accommodations/$id/');
+    final url = Uri.parse(ApiConfig.bookingAccommodationDetail(id));
 
     final response = await http.get(url, headers: await _getHeaders());
 
@@ -430,11 +743,95 @@ class ApiService {
     return BookingAccommodation.fromJson(data as Map<String, dynamic>);
   }
 
+  static Future<BookingAccommodation> createBookingAccommodation({
+    required int bookingId,
+    required int accommodationId,
+    String? checkInDate,
+    String? checkOutDate,
+  }) async {
+    try {
+      final url = Uri.parse(ApiConfig.bookingAccommodations);
+      final body = <String, dynamic>{
+        'booking_id': bookingId,
+        'accommodation_id': accommodationId,
+        if (checkInDate != null && checkInDate.isNotEmpty)
+          'check_in_date': checkInDate,
+        if (checkOutDate != null && checkOutDate.isNotEmpty)
+          'check_out_date': checkOutDate,
+      };
+
+      debugPrint('📤 API Request - POST $url');
+      debugPrint('📤 Request body: ${json.encode(body)}');
+
+      final response = await http.post(
+        url,
+        headers: await _getHeaders(authRequired: true),
+        body: json.encode(body),
+      );
+
+      debugPrint('📥 API Response - Status: ${response.statusCode}');
+      final data = _handleResponse(response);
+      return BookingAccommodation.fromJson(data as Map<String, dynamic>);
+    } catch (e) {
+      debugPrint('❌ Network Error - Create Booking Accommodation: $e');
+      rethrow;
+    }
+  }
+
+  static Future<BookingAccommodation> updateBookingAccommodation({
+    required int id,
+    String? checkInDate,
+    String? checkOutDate,
+  }) async {
+    try {
+      final url = Uri.parse(ApiConfig.bookingAccommodationDetail(id));
+      final body = <String, dynamic>{};
+
+      if (checkInDate != null) body['check_in_date'] = checkInDate;
+      if (checkOutDate != null) body['check_out_date'] = checkOutDate;
+
+      debugPrint('📤 API Request - PATCH $url');
+      debugPrint('📤 Request body: ${json.encode(body)}');
+
+      final response = await http.patch(
+        url,
+        headers: await _getHeaders(authRequired: true),
+        body: json.encode(body),
+      );
+
+      debugPrint('📥 API Response - Status: ${response.statusCode}');
+      final data = _handleResponse(response);
+      return BookingAccommodation.fromJson(data as Map<String, dynamic>);
+    } catch (e) {
+      debugPrint('❌ Network Error - Update Booking Accommodation: $e');
+      rethrow;
+    }
+  }
+
+  static Future<void> deleteBookingAccommodation(int id) async {
+    try {
+      final url = Uri.parse(ApiConfig.bookingAccommodationDetail(id));
+
+      debugPrint('📤 API Request - DELETE $url');
+
+      final response = await http.delete(
+        url,
+        headers: await _getHeaders(authRequired: true),
+      );
+
+      debugPrint('📥 API Response - Status: ${response.statusCode}');
+      _handleResponse(response);
+    } catch (e) {
+      debugPrint('❌ Network Error - Delete Booking Accommodation: $e');
+      rethrow;
+    }
+  }
+
   // Booking Activities APIs
   static Future<List<BookingActivity>> getBookingActivities({
     int? bookingId,
   }) async {
-    final url = Uri.parse('$baseUrl$apiPrefix/bookings/activities/').replace(
+    final url = Uri.parse(ApiConfig.bookingActivities).replace(
       queryParameters: {
         if (bookingId != null) 'booking_id': bookingId.toString(),
       },
@@ -452,7 +849,7 @@ class ApiService {
   }
 
   static Future<BookingActivity> getBookingActivity(int id) async {
-    final url = Uri.parse('$baseUrl$apiPrefix/bookings/activities/$id/');
+    final url = Uri.parse(ApiConfig.bookingActivityDetail(id));
 
     final response = await http.get(url, headers: await _getHeaders());
 
@@ -460,9 +857,88 @@ class ApiService {
     return BookingActivity.fromJson(data as Map<String, dynamic>);
   }
 
+  static Future<BookingActivity> createBookingActivity({
+    required int bookingId,
+    required int activityId,
+    String? scheduledDate,
+  }) async {
+    try {
+      final url = Uri.parse(ApiConfig.bookingActivities);
+      final body = <String, dynamic>{
+        'booking_id': bookingId,
+        'activity_id': activityId,
+        if (scheduledDate != null && scheduledDate.isNotEmpty)
+          'scheduled_date': scheduledDate,
+      };
+
+      debugPrint('📤 API Request - POST $url');
+      debugPrint('📤 Request body: ${json.encode(body)}');
+
+      final response = await http.post(
+        url,
+        headers: await _getHeaders(authRequired: true),
+        body: json.encode(body),
+      );
+
+      debugPrint('📥 API Response - Status: ${response.statusCode}');
+      final data = _handleResponse(response);
+      return BookingActivity.fromJson(data as Map<String, dynamic>);
+    } catch (e) {
+      debugPrint('❌ Network Error - Create Booking Activity: $e');
+      rethrow;
+    }
+  }
+
+  static Future<BookingActivity> updateBookingActivity({
+    required int id,
+    String? scheduledDate,
+  }) async {
+    try {
+      final url = Uri.parse(ApiConfig.bookingActivityDetail(id));
+      final body = <String, dynamic>{};
+
+      if (scheduledDate != null) body['scheduled_date'] = scheduledDate;
+
+      debugPrint('📤 API Request - PATCH $url');
+      debugPrint('📤 Request body: ${json.encode(body)}');
+
+      final response = await http.patch(
+        url,
+        headers: await _getHeaders(authRequired: true),
+        body: json.encode(body),
+      );
+
+      debugPrint('📥 API Response - Status: ${response.statusCode}');
+      final data = _handleResponse(response);
+      return BookingActivity.fromJson(data as Map<String, dynamic>);
+    } catch (e) {
+      debugPrint('❌ Network Error - Update Booking Activity: $e');
+      rethrow;
+    }
+  }
+
+  static Future<void> deleteBookingActivity(int id) async {
+    try {
+      final url = Uri.parse(ApiConfig.bookingActivityDetail(id));
+
+      debugPrint('📤 API Request - DELETE $url');
+
+      final response = await http.delete(
+        url,
+        headers: await _getHeaders(authRequired: true),
+      );
+
+      debugPrint('📥 API Response - Status: ${response.statusCode}');
+      _handleResponse(response);
+    } catch (e) {
+      debugPrint('❌ Network Error - Delete Booking Activity: $e');
+      rethrow;
+    }
+  }
+
   // Booking Routes APIs
   static Future<List<BookingRoute>> getBookingRoutes({int? bookingId}) async {
-    final url = Uri.parse('$baseUrl$apiPrefix/bookings/routes/').replace(
+    final url = Uri.parse(ApiConfig.bookingRoutes).replace(
       queryParameters: {
         if (bookingId != null) 'booking_id': bookingId.toString(),
       },
@@ -480,12 +956,91 @@ class ApiService {
   }
 
   static Future<BookingRoute> getBookingRoute(int id) async {
-    final url = Uri.parse('$baseUrl$apiPrefix/bookings/routes/$id/');
+    final url = Uri.parse(ApiConfig.bookingRouteDetail(id));
 
     final response = await http.get(url, headers: await _getHeaders());
 
     final data = _handleResponse(response);
     return BookingRoute.fromJson(data as Map<String, dynamic>);
+  }
+
+  static Future<BookingRoute> createBookingRoute({
+    required int bookingId,
+    required int routeId,
+    String? scheduledDate,
+  }) async {
+    try {
+      final url = Uri.parse(ApiConfig.bookingRoutes);
+      final body = <String, dynamic>{
+        'booking_id': bookingId,
+        'route_id': routeId,
+        if (scheduledDate != null && scheduledDate.isNotEmpty)
+          'scheduled_date': scheduledDate,
+      };
+
+      debugPrint('📤 API Request - POST $url');
+      debugPrint('📤 Request body: ${json.encode(body)}');
+
+      final response = await http.post(
+        url,
+        headers: await _getHeaders(authRequired: true),
+        body: json.encode(body),
+      );
+
+      debugPrint('📥 API Response - Status: ${response.statusCode}');
+      final data = _handleResponse(response);
+      return BookingRoute.fromJson(data as Map<String, dynamic>);
+    } catch (e) {
+      debugPrint('❌ Network Error - Create Booking Route: $e');
+      rethrow;
+    }
+  }
+
+  static Future<BookingRoute> updateBookingRoute({
+    required int id,
+    String? scheduledDate,
+  }) async {
+    try {
+      final url = Uri.parse(ApiConfig.bookingRouteDetail(id));
+      final body = <String, dynamic>{};
+
+      if (scheduledDate != null) body['scheduled_date'] = scheduledDate;
+
+      debugPrint('📤 API Request - PATCH $url');
+      debugPrint('📤 Request body: ${json.encode(body)}');
+
+      final response = await http.patch(
+        url,
+        headers: await _getHeaders(authRequired: true),
+        body: json.encode(body),
+      );
+
+      debugPrint('📥 API Response - Status: ${response.statusCode}');
+      final data = _handleResponse(response);
+      return BookingRoute.fromJson(data as Map<String, dynamic>);
+    } catch (e) {
+      debugPrint('❌ Network Error - Update Booking Route: $e');
+      rethrow;
+    }
+  }
+
+  static Future<void> deleteBookingRoute(int id) async {
+    try {
+      final url = Uri.parse(ApiConfig.bookingRouteDetail(id));
+
+      debugPrint('📤 API Request - DELETE $url');
+
+      final response = await http.delete(
+        url,
+        headers: await _getHeaders(authRequired: true),
+      );
+
+      debugPrint('📥 API Response - Status: ${response.statusCode}');
+      _handleResponse(response);
+    } catch (e) {
+      debugPrint('❌ Network Error - Delete Booking Route: $e');
+      rethrow;
+    }
   }
 
   // AI Communication API
@@ -495,7 +1050,7 @@ class ApiService {
     required double longitude,
   }) async {
     try {
-      final url = Uri.parse('$baseUrl$apiPrefix/api_communication/');
+      final url = Uri.parse(ApiConfig.aiCommunication);
       final body = {
         'prompt': prompt,
         'latitude': latitude,
@@ -516,6 +1071,77 @@ class ApiService {
       return AIResponse.fromJson(data as Map<String, dynamic>);
     } catch (e) {
       debugPrint('❌ Network Error - AI Communication: $e');
+      rethrow;
+    }
+  }
+
+  // Profile APIs
+  static Future<Map<String, dynamic>> getProfile() async {
+    try {
+      final url = Uri.parse(ApiConfig.profile);
+      debugPrint('📤 API Request - GET $url');
+
+      final response = await http.get(
+        url,
+        headers: await _getHeaders(authRequired: true),
+      );
+      debugPrint('📥 API Response - Status: ${response.statusCode}');
+
+      return _handleResponse(response) as Map<String, dynamic>;
+    } catch (e) {
+      debugPrint('❌ Network Error - Get Profile: $e');
+      rethrow;
+    }
+  }
+
+  static Future<Map<String, dynamic>> updateProfile({
+    String? firstName,
+    String? lastName,
+    String? email,
+    String? imagePath,
+  }) async {
+    try {
+      final url = Uri.parse(ApiConfig.profile);
+      debugPrint('📤 API Request - PATCH/POST $url');
+
+      final headers = await _getHeaders(authRequired: true);
+
+      if (imagePath != null) {
+        // Use MultipartRequest for image upload
+        final request = http.MultipartRequest('POST', url)
+          ..headers.addAll(headers);
+
+        if (firstName != null) request.fields['first_name'] = firstName;
+        if (lastName != null) request.fields['last_name'] = lastName;
+        if (email != null) request.fields['email'] = email;
+
+        request.files.add(
+          await http.MultipartFile.fromPath('profile_picture', imagePath),
+        );
+
+        final streamedResponse = await request.send();
+        final response = await http.Response.fromStream(streamedResponse);
+
+        debugPrint('📥 API Response - Status: ${response.statusCode}');
+        return _handleResponse(response) as Map<String, dynamic>;
+      } else {
+        // Regular JSON update
+        final body = <String, dynamic>{};
+        if (firstName != null) body['first_name'] = firstName;
+        if (lastName != null) body['last_name'] = lastName;
+        if (email != null) body['email'] = email;
+
+        final response = await http.patch(
+          url,
+          headers: headers,
+          body: json.encode(body),
+        );
+
+        debugPrint('📥 API Response - Status: ${response.statusCode}');
+        return _handleResponse(response) as Map<String, dynamic>;
+      }
+    } catch (e) {
+      debugPrint('❌ Network Error - Update Profile: $e');
       rethrow;
     }
   }

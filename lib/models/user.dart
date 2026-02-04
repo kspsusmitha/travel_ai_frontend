@@ -66,6 +66,9 @@ class User {
   final String id;
   final String name;
   final String email;
+  final String? firstName;
+  final String? lastName;
+  final String? profilePicture;
   final UserType userType;
   final DateTime createdAt;
 
@@ -73,6 +76,9 @@ class User {
     required this.id,
     required this.name,
     required this.email,
+    this.firstName,
+    this.lastName,
+    this.profilePicture,
     required this.userType,
     required this.createdAt,
   });
@@ -82,6 +88,9 @@ class User {
       'id': id,
       'name': name,
       'email': email,
+      'first_name': firstName,
+      'last_name': lastName,
+      'profile_picture': profilePicture,
       'userType': userType.name,
       'createdAt': createdAt.toIso8601String(),
     };
@@ -89,14 +98,19 @@ class User {
 
   factory User.fromJson(Map<String, dynamic> json) {
     return User(
-      id: json['id'] as String,
-      name: json['name'] as String,
-      email: json['email'] as String,
+      id: json['id']?.toString() ?? '',
+      name: json['name']?.toString() ?? '',
+      email: json['email']?.toString() ?? '',
+      firstName: json['first_name']?.toString(),
+      lastName: json['last_name']?.toString(),
+      profilePicture: json['profile_picture']?.toString(),
       userType: UserType.values.firstWhere(
         (e) => e.name == json['userType'],
         orElse: () => UserType.soloTraveler,
       ),
-      createdAt: DateTime.parse(json['createdAt'] as String),
+      createdAt: json['createdAt'] != null
+          ? DateTime.parse(json['createdAt'] as String)
+          : DateTime.now(),
     );
   }
 }

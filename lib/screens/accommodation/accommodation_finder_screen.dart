@@ -3,11 +3,14 @@ import '../../theme/app_theme.dart';
 import '../../models/accommodation.dart';
 import '../../common_widgets/glassmorphism.dart';
 
+import '../../services/api_service.dart';
+
 class AccommodationFinderScreen extends StatefulWidget {
   const AccommodationFinderScreen({super.key});
 
   @override
-  State<AccommodationFinderScreen> createState() => _AccommodationFinderScreenState();
+  State<AccommodationFinderScreen> createState() =>
+      _AccommodationFinderScreenState();
 }
 
 class _AccommodationFinderScreenState extends State<AccommodationFinderScreen>
@@ -44,19 +47,32 @@ class _AccommodationFinderScreenState extends State<AccommodationFinderScreen>
       _errorMessage = null;
     });
 
-    // Simulate API call delay
-    await Future.delayed(const Duration(seconds: 1));
+    try {
+      final accommodations = await ApiService.getAccommodations(
+        search: _searchController.text.trim().isEmpty
+            ? null
+            : _searchController.text.trim(),
+      );
 
-    // TODO: Implement API call
-    setState(() {
-      _accommodations = [];
-      _isLoading = false;
-    });
+      if (mounted) {
+        setState(() {
+          _accommodations = accommodations;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _errorMessage = e.toString().replaceAll('Exception: ', '');
+          _isLoading = false;
+        });
+      }
+    }
   }
 
   List<Accommodation> get _filteredAccommodations {
     var filtered = List<Accommodation>.from(_accommodations);
-    
+
     if (_selectedFilter != 'all') {
       filtered = filtered.where((a) {
         if (_selectedFilter == 'premium') {
@@ -67,15 +83,19 @@ class _AccommodationFinderScreenState extends State<AccommodationFinderScreen>
         return true;
       }).toList();
     }
-    
+
     if (_searchController.text.isNotEmpty) {
       final searchLower = _searchController.text.toLowerCase();
-      filtered = filtered.where((a) =>
-          a.name.toLowerCase().contains(searchLower) ||
-          a.location.toLowerCase().contains(searchLower) ||
-          a.description.toLowerCase().contains(searchLower)).toList();
+      filtered = filtered
+          .where(
+            (a) =>
+                a.name.toLowerCase().contains(searchLower) ||
+                a.location.toLowerCase().contains(searchLower) ||
+                a.description.toLowerCase().contains(searchLower),
+          )
+          .toList();
     }
-    
+
     if (_sortBy == 'cost_low') {
       filtered.sort((a, b) => a.cost.compareTo(b.cost));
     } else if (_sortBy == 'cost_high') {
@@ -83,7 +103,7 @@ class _AccommodationFinderScreenState extends State<AccommodationFinderScreen>
     } else if (_sortBy == 'name') {
       filtered.sort((a, b) => a.name.compareTo(b.name));
     }
-    
+
     return filtered;
   }
 
@@ -108,10 +128,7 @@ class _AccommodationFinderScreenState extends State<AccommodationFinderScreen>
             Container(
               decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [
-                    AppTheme.primaryColor,
-                    AppTheme.secondaryColor,
-                  ],
+                  colors: [AppTheme.primaryColor, AppTheme.secondaryColor],
                 ),
                 boxShadow: [
                   BoxShadow(
@@ -249,7 +266,10 @@ class _AccommodationFinderScreenState extends State<AccommodationFinderScreen>
               borderRadius: BorderRadius.circular(20),
               child: Container(
                 margin: const EdgeInsets.symmetric(horizontal: 16),
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [
@@ -267,8 +287,14 @@ class _AccommodationFinderScreenState extends State<AccommodationFinderScreen>
                     DropdownButton<String>(
                       value: _sortBy,
                       items: const [
-                        DropdownMenuItem(value: 'cost_low', child: Text('Price: Low to High')),
-                        DropdownMenuItem(value: 'cost_high', child: Text('Price: High to Low')),
+                        DropdownMenuItem(
+                          value: 'cost_low',
+                          child: Text('Price: Low to High'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'cost_high',
+                          child: Text('Price: High to Low'),
+                        ),
                         DropdownMenuItem(value: 'name', child: Text('Name')),
                       ],
                       onChanged: (value) {
@@ -287,104 +313,110 @@ class _AccommodationFinderScreenState extends State<AccommodationFinderScreen>
               child: _isLoading
                   ? Center(
                       child: CircularProgressIndicator(
-                        valueColor: AlwaysStoppedAnimation<Color>(AppTheme.primaryColor),
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          AppTheme.primaryColor,
+                        ),
                       ),
                     )
                   : _errorMessage != null
-                      ? Center(
-                          child: AnimatedGlassCard(
-                            delay: const Duration(milliseconds: 300),
-                            blur: 10.0,
-                            opacity: 0.2,
-                            borderRadius: BorderRadius.circular(20),
-                            child: Container(
-                              padding: const EdgeInsets.all(24),
-                              decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  colors: [
-                                    Colors.white.withOpacity(0.9),
-                                    Colors.white.withOpacity(0.7),
-                                  ],
-                                ),
-                              ),
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(
-                                    Icons.error_outline,
-                                    size: 64,
-                                    color: AppTheme.errorColor,
-                                  ),
-                                  const SizedBox(height: 16),
-                                  Text(
-                                    _errorMessage!,
-                                    style: const TextStyle(color: AppTheme.errorColor),
-                                    textAlign: TextAlign.center,
-                                  ),
-                                  const SizedBox(height: 16),
-                                  Container(
-                                    decoration: BoxDecoration(
-                                      gradient: LinearGradient(
-                                        colors: [
-                                          AppTheme.errorColor,
-                                          AppTheme.errorColor.withOpacity(0.7),
-                                        ],
-                                      ),
-                                      borderRadius: BorderRadius.circular(12),
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: AppTheme.errorColor.withOpacity(0.3),
-                                          blurRadius: 8,
-                                          offset: const Offset(0, 3),
-                                        ),
-                                      ],
-                                    ),
-                                    child: ElevatedButton(
-                                      onPressed: _loadAccommodations,
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: Colors.transparent,
-                                        shadowColor: Colors.transparent,
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(12),
-                                        ),
-                                      ),
-                                      child: const Text('Retry'),
-                                    ),
-                                  ),
-                                ],
-                              ),
+                  ? Center(
+                      child: AnimatedGlassCard(
+                        delay: const Duration(milliseconds: 300),
+                        blur: 10.0,
+                        opacity: 0.2,
+                        borderRadius: BorderRadius.circular(20),
+                        child: Container(
+                          padding: const EdgeInsets.all(24),
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                Colors.white.withOpacity(0.9),
+                                Colors.white.withOpacity(0.7),
+                              ],
                             ),
                           ),
-                        )
-                      : _filteredAccommodations.isEmpty
-                          ? Center(
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(
-                                    Icons.hotel,
-                                    size: 64,
-                                    color: AppTheme.textSecondary.withOpacity(0.5),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.error_outline,
+                                size: 64,
+                                color: AppTheme.errorColor,
+                              ),
+                              const SizedBox(height: 16),
+                              Text(
+                                _errorMessage!,
+                                style: const TextStyle(
+                                  color: AppTheme.errorColor,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                              const SizedBox(height: 16),
+                              Container(
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    colors: [
+                                      AppTheme.errorColor,
+                                      AppTheme.errorColor.withOpacity(0.7),
+                                    ],
                                   ),
-                                  const SizedBox(height: 16),
-                                  Text(
-                                    'No accommodations found',
-                                    style: TextStyle(
-                                      color: AppTheme.textSecondary,
-                                      fontSize: 18,
+                                  borderRadius: BorderRadius.circular(12),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: AppTheme.errorColor.withOpacity(
+                                        0.3,
+                                      ),
+                                      blurRadius: 8,
+                                      offset: const Offset(0, 3),
+                                    ),
+                                  ],
+                                ),
+                                child: ElevatedButton(
+                                  onPressed: _loadAccommodations,
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.transparent,
+                                    shadowColor: Colors.transparent,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
                                     ),
                                   ),
-                                ],
+                                  child: const Text('Retry'),
+                                ),
                               ),
-                            )
-                          : ListView.builder(
-                              padding: const EdgeInsets.all(16),
-                              itemCount: _filteredAccommodations.length,
-                              itemBuilder: (context, index) {
-                                final accommodation = _filteredAccommodations[index];
-                                return _buildAccommodationCard(accommodation, index);
-                              },
+                            ],
+                          ),
+                        ),
+                      ),
+                    )
+                  : _filteredAccommodations.isEmpty
+                  ? Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.hotel,
+                            size: 64,
+                            color: AppTheme.textSecondary.withOpacity(0.5),
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            'No accommodations found',
+                            style: TextStyle(
+                              color: AppTheme.textSecondary,
+                              fontSize: 18,
                             ),
+                          ),
+                        ],
+                      ),
+                    )
+                  : ListView.builder(
+                      padding: const EdgeInsets.all(16),
+                      itemCount: _filteredAccommodations.length,
+                      itemBuilder: (context, index) {
+                        final accommodation = _filteredAccommodations[index];
+                        return _buildAccommodationCard(accommodation, index);
+                      },
+                    ),
             ),
           ],
         ),
@@ -417,10 +449,7 @@ class _AccommodationFinderScreenState extends State<AccommodationFinderScreen>
                   end: Alignment.bottomRight,
                 )
               : LinearGradient(
-                  colors: [
-                    Colors.white,
-                    Colors.white.withOpacity(0.95),
-                  ],
+                  colors: [Colors.white, Colors.white.withOpacity(0.95)],
                 ),
           borderRadius: BorderRadius.circular(25),
           border: Border.all(
@@ -510,7 +539,8 @@ class _AccommodationFinderScreenState extends State<AccommodationFinderScreen>
                 gradient: LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
-                  colors: accommodation.category == AccommodationCategory.premium
+                  colors:
+                      accommodation.category == AccommodationCategory.premium
                       ? [
                           AppTheme.primaryColor.withOpacity(0.3),
                           AppTheme.secondaryColor.withOpacity(0.2),
@@ -520,18 +550,19 @@ class _AccommodationFinderScreenState extends State<AccommodationFinderScreen>
                           AppTheme.accentColor.withOpacity(0.2),
                         ],
                 ),
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(20),
+                ),
               ),
               child: Center(
                 child: Container(
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
-                      colors: accommodation.category == AccommodationCategory.premium
-                          ? [
-                              AppTheme.primaryColor,
-                              AppTheme.secondaryColor,
-                            ]
+                      colors:
+                          accommodation.category ==
+                              AccommodationCategory.premium
+                          ? [AppTheme.primaryColor, AppTheme.secondaryColor]
                           : [
                               AppTheme.accentColor,
                               AppTheme.accentColor.withOpacity(0.7),
@@ -540,10 +571,12 @@ class _AccommodationFinderScreenState extends State<AccommodationFinderScreen>
                     shape: BoxShape.circle,
                     boxShadow: [
                       BoxShadow(
-                        color: (accommodation.category == AccommodationCategory.premium
-                                ? AppTheme.primaryColor
-                                : AppTheme.accentColor)
-                            .withOpacity(0.4),
+                        color:
+                            (accommodation.category ==
+                                        AccommodationCategory.premium
+                                    ? AppTheme.primaryColor
+                                    : AppTheme.accentColor)
+                                .withOpacity(0.4),
                         blurRadius: 12,
                         spreadRadius: 2,
                       ),
@@ -577,10 +610,15 @@ class _AccommodationFinderScreenState extends State<AccommodationFinderScreen>
                         ),
                       ),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 6,
+                        ),
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
-                            colors: accommodation.category == AccommodationCategory.premium
+                            colors:
+                                accommodation.category ==
+                                    AccommodationCategory.premium
                                 ? [
                                     AppTheme.primaryColor,
                                     AppTheme.secondaryColor,
@@ -593,10 +631,12 @@ class _AccommodationFinderScreenState extends State<AccommodationFinderScreen>
                           borderRadius: BorderRadius.circular(20),
                           boxShadow: [
                             BoxShadow(
-                              color: (accommodation.category == AccommodationCategory.premium
-                                      ? AppTheme.primaryColor
-                                      : AppTheme.accentColor)
-                                  .withOpacity(0.3),
+                              color:
+                                  (accommodation.category ==
+                                              AccommodationCategory.premium
+                                          ? AppTheme.primaryColor
+                                          : AppTheme.accentColor)
+                                      .withOpacity(0.3),
                               blurRadius: 8,
                               offset: const Offset(0, 3),
                             ),
@@ -646,7 +686,10 @@ class _AccommodationFinderScreenState extends State<AccommodationFinderScreen>
                   ),
                   const SizedBox(height: 12),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
                     decoration: BoxDecoration(
                       color: AppTheme.primaryColor.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(12),
@@ -679,7 +722,10 @@ class _AccommodationFinderScreenState extends State<AccommodationFinderScreen>
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 10,
+                        ),
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
                             colors: [
@@ -707,14 +753,12 @@ class _AccommodationFinderScreenState extends State<AccommodationFinderScreen>
                       ),
                       Row(
                         children: [
-                          if (accommodation.latitude != null && accommodation.longitude != null)
+                          if (accommodation.latitude != null &&
+                              accommodation.longitude != null)
                             Container(
                               decoration: BoxDecoration(
                                 gradient: LinearGradient(
-                                  colors: [
-                                    Colors.green,
-                                    Colors.green.shade700,
-                                  ],
+                                  colors: [Colors.green, Colors.green.shade700],
                                 ),
                                 borderRadius: BorderRadius.circular(12),
                                 boxShadow: [
@@ -734,8 +778,14 @@ class _AccommodationFinderScreenState extends State<AccommodationFinderScreen>
                                     ),
                                   );
                                 },
-                                icon: const Icon(Icons.map, color: Colors.white),
-                                label: const Text('Map', style: TextStyle(color: Colors.white)),
+                                icon: const Icon(
+                                  Icons.map,
+                                  color: Colors.white,
+                                ),
+                                label: const Text(
+                                  'Map',
+                                  style: TextStyle(color: Colors.white),
+                                ),
                                 style: OutlinedButton.styleFrom(
                                   side: BorderSide.none,
                                   shape: RoundedRectangleBorder(
@@ -744,7 +794,8 @@ class _AccommodationFinderScreenState extends State<AccommodationFinderScreen>
                                 ),
                               ),
                             ),
-                          if (accommodation.latitude != null && accommodation.longitude != null)
+                          if (accommodation.latitude != null &&
+                              accommodation.longitude != null)
                             const SizedBox(width: 8),
                           Container(
                             decoration: BoxDecoration(
@@ -768,12 +819,17 @@ class _AccommodationFinderScreenState extends State<AccommodationFinderScreen>
                                 // TODO: Add to itinerary
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(
-                                    content: Text('${accommodation.name} added to itinerary'),
+                                    content: Text(
+                                      '${accommodation.name} added to itinerary',
+                                    ),
                                   ),
                                 );
                               },
                               icon: const Icon(Icons.add, color: Colors.white),
-                              label: const Text('Add', style: TextStyle(color: Colors.white)),
+                              label: const Text(
+                                'Add',
+                                style: TextStyle(color: Colors.white),
+                              ),
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Colors.transparent,
                                 shadowColor: Colors.transparent,

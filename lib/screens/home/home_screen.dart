@@ -4,7 +4,6 @@ import '../../utils/constants.dart';
 import '../../models/trip.dart';
 import '../../common_widgets/glassmorphism.dart';
 import '../trip/create_trip_screen.dart';
-import '../trip/trip_detail_screen.dart';
 import '../trip/trip_history_screen.dart';
 import '../accommodation/accommodation_finder_screen.dart';
 import '../activity/activity_finder_screen.dart';
@@ -116,7 +115,7 @@ class _HomeScreenState extends State<HomeScreen>
                           Container(
                             padding: const EdgeInsets.all(8),
                             decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.1),
+                              color: Colors.white.withValues(alpha: 0.1),
                               shape: BoxShape.circle,
                             ),
                             child: const Icon(
@@ -138,7 +137,7 @@ class _HomeScreenState extends State<HomeScreen>
                             child: Container(
                               padding: const EdgeInsets.all(8),
                               decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.1),
+                                color: Colors.white.withValues(alpha: 0.1),
                                 shape: BoxShape.circle,
                               ),
                               child: const Icon(
@@ -224,8 +223,8 @@ class _HomeScreenState extends State<HomeScreen>
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
-                    AppTheme.primaryColor.withOpacity(0.1),
-                    AppTheme.secondaryColor.withOpacity(0.05),
+                    AppTheme.primaryColor.withValues(alpha: 0.1),
+                    AppTheme.secondaryColor.withValues(alpha: 0.05),
                   ],
                 ),
               ),
@@ -243,7 +242,7 @@ class _HomeScreenState extends State<HomeScreen>
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
-                          color: AppTheme.primaryColor.withOpacity(0.3),
+                          color: AppTheme.primaryColor.withValues(alpha: 0.3),
                           blurRadius: 10,
                           spreadRadius: 2,
                         ),
@@ -416,8 +415,8 @@ class _HomeScreenState extends State<HomeScreen>
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
-                    Colors.white.withOpacity(0.9),
-                    Colors.white.withOpacity(0.7),
+                    Colors.white.withValues(alpha: 0.9),
+                    Colors.white.withValues(alpha: 0.7),
                   ],
                 ),
               ),
@@ -466,7 +465,9 @@ class _HomeScreenState extends State<HomeScreen>
                             Icon(
                               Icons.flight_takeoff,
                               size: 64,
-                              color: AppTheme.textSecondary.withOpacity(0.5),
+                              color: AppTheme.textSecondary.withValues(
+                                alpha: 0.5,
+                              ),
                             ),
                             const SizedBox(height: 16),
                             Text(
@@ -518,8 +519,8 @@ class _HomeScreenState extends State<HomeScreen>
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
-                    AppTheme.primaryColor.withOpacity(0.1),
-                    AppTheme.secondaryColor.withOpacity(0.05),
+                    AppTheme.primaryColor.withValues(alpha: 0.1),
+                    AppTheme.secondaryColor.withValues(alpha: 0.05),
                   ],
                 ),
               ),
@@ -537,7 +538,7 @@ class _HomeScreenState extends State<HomeScreen>
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
-                          color: AppTheme.primaryColor.withOpacity(0.4),
+                          color: AppTheme.primaryColor.withValues(alpha: 0.4),
                           blurRadius: 12,
                           spreadRadius: 2,
                         ),
@@ -662,7 +663,10 @@ class _HomeScreenState extends State<HomeScreen>
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [color.withOpacity(0.2), color.withOpacity(0.1)],
+            colors: [
+              color.withValues(alpha: 0.2),
+              color.withValues(alpha: 0.1),
+            ],
           ),
         ),
         child: Column(
@@ -672,12 +676,12 @@ class _HomeScreenState extends State<HomeScreen>
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [color, color.withOpacity(0.7)],
+                  colors: [color, color.withValues(alpha: 0.7)],
                 ),
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                    color: color.withOpacity(0.4),
+                    color: color.withValues(alpha: 0.4),
                     blurRadius: 12,
                     spreadRadius: 2,
                   ),
@@ -710,9 +714,17 @@ class _HomeScreenState extends State<HomeScreen>
       opacity: 0.1,
       borderRadius: BorderRadius.circular(16),
       onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => TripDetailScreen(trip: trip)),
+        // TODO: Update to use Booking model instead of Trip
+        // Navigator.push(
+        //   context,
+        //   MaterialPageRoute(builder: (context) => TripDetailScreen(booking: booking)),
+        // );
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Trip details will be available after booking integration',
+            ),
+          ),
         );
       },
       child: Container(
@@ -722,12 +734,12 @@ class _HomeScreenState extends State<HomeScreen>
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              AppTheme.primaryColor.withOpacity(0.05),
-              AppTheme.secondaryColor.withOpacity(0.02),
+              AppTheme.primaryColor.withValues(alpha: 0.05),
+              AppTheme.secondaryColor.withValues(alpha: 0.02),
             ],
           ),
           border: Border.all(
-            color: AppTheme.primaryColor.withOpacity(0.2),
+            color: AppTheme.primaryColor.withValues(alpha: 0.2),
             width: 1,
           ),
         ),
@@ -764,7 +776,7 @@ class _HomeScreenState extends State<HomeScreen>
                             (trip.type == AppConstants.tripTypeGroup
                                     ? AppTheme.primaryColor
                                     : Colors.grey)
-                                .withOpacity(0.3),
+                                .withValues(alpha: 0.3),
                         blurRadius: 8,
                         offset: const Offset(0, 2),
                       ),
@@ -828,9 +840,9 @@ class _HomeScreenState extends State<HomeScreen>
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: AppTheme.primaryColor.withOpacity(0.1),
+        color: AppTheme.primaryColor.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppTheme.primaryColor.withOpacity(0.2)),
+        border: Border.all(color: AppTheme.primaryColor.withValues(alpha: 0.2)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -870,7 +882,10 @@ class _HomeScreenState extends State<HomeScreen>
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [color.withOpacity(0.1), color.withOpacity(0.05)],
+            colors: [
+              color.withValues(alpha: 0.1),
+              color.withValues(alpha: 0.05),
+            ],
           ),
         ),
         child: Row(
@@ -879,12 +894,12 @@ class _HomeScreenState extends State<HomeScreen>
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [color, color.withOpacity(0.7)],
+                  colors: [color, color.withValues(alpha: 0.7)],
                 ),
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
-                    color: color.withOpacity(0.4),
+                    color: color.withValues(alpha: 0.4),
                     blurRadius: 12,
                     spreadRadius: 2,
                   ),
@@ -918,7 +933,7 @@ class _HomeScreenState extends State<HomeScreen>
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: color.withOpacity(0.1),
+                color: color.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
               child: Icon(Icons.chevron_right, color: color, size: 24),

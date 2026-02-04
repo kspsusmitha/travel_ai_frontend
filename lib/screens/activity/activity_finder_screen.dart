@@ -5,6 +5,8 @@ import '../../models/travel_activity.dart';
 import '../../common_widgets/glassmorphism.dart';
 import 'package:intl/intl.dart';
 
+import '../../services/api_service.dart';
+
 class ActivityFinderScreen extends StatefulWidget {
   const ActivityFinderScreen({super.key});
 
@@ -46,27 +48,44 @@ class _ActivityFinderScreenState extends State<ActivityFinderScreen>
       _errorMessage = null;
     });
 
-    // Simulate API call delay
-    await Future.delayed(const Duration(seconds: 1));
+    try {
+      final activities = await ApiService.getActivities(
+        search: _searchController.text.trim().isEmpty
+            ? null
+            : _searchController.text.trim(),
+      );
 
-    // TODO: Implement API call
-    setState(() {
-      _activities = [];
-      _isLoading = false;
-    });
+      if (mounted) {
+        setState(() {
+          _activities = activities;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _errorMessage = e.toString().replaceAll('Exception: ', '');
+          _isLoading = false;
+        });
+      }
+    }
   }
 
   List<TravelActivity> get _filteredActivities {
     var filtered = List<TravelActivity>.from(_activities);
-    
+
     if (_searchController.text.isNotEmpty) {
       final searchLower = _searchController.text.toLowerCase();
-      filtered = filtered.where((a) =>
-          a.name.toLowerCase().contains(searchLower) ||
-          a.location.toLowerCase().contains(searchLower) ||
-          a.description.toLowerCase().contains(searchLower)).toList();
+      filtered = filtered
+          .where(
+            (a) =>
+                a.name.toLowerCase().contains(searchLower) ||
+                a.location.toLowerCase().contains(searchLower) ||
+                a.description.toLowerCase().contains(searchLower),
+          )
+          .toList();
     }
-    
+
     if (_sortBy == 'cost_low') {
       filtered.sort((a, b) => a.cost.compareTo(b.cost));
     } else if (_sortBy == 'cost_high') {
@@ -74,7 +93,7 @@ class _ActivityFinderScreenState extends State<ActivityFinderScreen>
     } else if (_sortBy == 'name') {
       filtered.sort((a, b) => a.name.compareTo(b.name));
     }
-    
+
     return filtered;
   }
 
@@ -99,10 +118,7 @@ class _ActivityFinderScreenState extends State<ActivityFinderScreen>
             Container(
               decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [
-                    AppTheme.primaryColor,
-                    AppTheme.secondaryColor,
-                  ],
+                  colors: [AppTheme.primaryColor, AppTheme.secondaryColor],
                 ),
                 boxShadow: [
                   BoxShadow(
@@ -224,8 +240,14 @@ class _ActivityFinderScreenState extends State<ActivityFinderScreen>
                     spacing: 8,
                     children: [
                       _buildCategoryChip('All', 'all', 0),
-                      ...AppConstants.activityTypes.asMap().entries.map((entry) {
-                        return _buildCategoryChip(entry.value, entry.value, entry.key + 1);
+                      ...AppConstants.activityTypes.asMap().entries.map((
+                        entry,
+                      ) {
+                        return _buildCategoryChip(
+                          entry.value,
+                          entry.value,
+                          entry.key + 1,
+                        );
                       }),
                     ],
                   ),
@@ -240,7 +262,10 @@ class _ActivityFinderScreenState extends State<ActivityFinderScreen>
               borderRadius: BorderRadius.circular(20),
               child: Container(
                 margin: const EdgeInsets.symmetric(horizontal: 16),
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [
@@ -258,8 +283,14 @@ class _ActivityFinderScreenState extends State<ActivityFinderScreen>
                     DropdownButton<String>(
                       value: _sortBy,
                       items: const [
-                        DropdownMenuItem(value: 'cost_low', child: Text('Price: Low to High')),
-                        DropdownMenuItem(value: 'cost_high', child: Text('Price: High to Low')),
+                        DropdownMenuItem(
+                          value: 'cost_low',
+                          child: Text('Price: Low to High'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'cost_high',
+                          child: Text('Price: High to Low'),
+                        ),
                         DropdownMenuItem(value: 'name', child: Text('Name')),
                       ],
                       onChanged: (value) {
@@ -278,104 +309,110 @@ class _ActivityFinderScreenState extends State<ActivityFinderScreen>
               child: _isLoading
                   ? Center(
                       child: CircularProgressIndicator(
-                        valueColor: AlwaysStoppedAnimation<Color>(AppTheme.primaryColor),
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          AppTheme.primaryColor,
+                        ),
                       ),
                     )
                   : _errorMessage != null
-                      ? Center(
-                          child: AnimatedGlassCard(
-                            delay: const Duration(milliseconds: 300),
-                            blur: 10.0,
-                            opacity: 0.2,
-                            borderRadius: BorderRadius.circular(20),
-                            child: Container(
-                              padding: const EdgeInsets.all(24),
-                              decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  colors: [
-                                    Colors.white.withOpacity(0.9),
-                                    Colors.white.withOpacity(0.7),
-                                  ],
-                                ),
-                              ),
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(
-                                    Icons.error_outline,
-                                    size: 64,
-                                    color: AppTheme.errorColor,
-                                  ),
-                                  const SizedBox(height: 16),
-                                  Text(
-                                    _errorMessage!,
-                                    style: const TextStyle(color: AppTheme.errorColor),
-                                    textAlign: TextAlign.center,
-                                  ),
-                                  const SizedBox(height: 16),
-                                  Container(
-                                    decoration: BoxDecoration(
-                                      gradient: LinearGradient(
-                                        colors: [
-                                          AppTheme.errorColor,
-                                          AppTheme.errorColor.withOpacity(0.7),
-                                        ],
-                                      ),
-                                      borderRadius: BorderRadius.circular(12),
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: AppTheme.errorColor.withOpacity(0.3),
-                                          blurRadius: 8,
-                                          offset: const Offset(0, 3),
-                                        ),
-                                      ],
-                                    ),
-                                    child: ElevatedButton(
-                                      onPressed: _loadActivities,
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: Colors.transparent,
-                                        shadowColor: Colors.transparent,
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(12),
-                                        ),
-                                      ),
-                                      child: const Text('Retry'),
-                                    ),
-                                  ),
-                                ],
-                              ),
+                  ? Center(
+                      child: AnimatedGlassCard(
+                        delay: const Duration(milliseconds: 300),
+                        blur: 10.0,
+                        opacity: 0.2,
+                        borderRadius: BorderRadius.circular(20),
+                        child: Container(
+                          padding: const EdgeInsets.all(24),
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                Colors.white.withOpacity(0.9),
+                                Colors.white.withOpacity(0.7),
+                              ],
                             ),
                           ),
-                        )
-                      : _filteredActivities.isEmpty
-                          ? Center(
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(
-                                    Icons.local_activity,
-                                    size: 64,
-                                    color: AppTheme.textSecondary.withOpacity(0.5),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.error_outline,
+                                size: 64,
+                                color: AppTheme.errorColor,
+                              ),
+                              const SizedBox(height: 16),
+                              Text(
+                                _errorMessage!,
+                                style: const TextStyle(
+                                  color: AppTheme.errorColor,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                              const SizedBox(height: 16),
+                              Container(
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    colors: [
+                                      AppTheme.errorColor,
+                                      AppTheme.errorColor.withOpacity(0.7),
+                                    ],
                                   ),
-                                  const SizedBox(height: 16),
-                                  Text(
-                                    'No activities found',
-                                    style: TextStyle(
-                                      color: AppTheme.textSecondary,
-                                      fontSize: 18,
+                                  borderRadius: BorderRadius.circular(12),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: AppTheme.errorColor.withOpacity(
+                                        0.3,
+                                      ),
+                                      blurRadius: 8,
+                                      offset: const Offset(0, 3),
+                                    ),
+                                  ],
+                                ),
+                                child: ElevatedButton(
+                                  onPressed: _loadActivities,
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.transparent,
+                                    shadowColor: Colors.transparent,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
                                     ),
                                   ),
-                                ],
+                                  child: const Text('Retry'),
+                                ),
                               ),
-                            )
-                          : ListView.builder(
-                              padding: const EdgeInsets.all(16),
-                              itemCount: _filteredActivities.length,
-                              itemBuilder: (context, index) {
-                                final activity = _filteredActivities[index];
-                                return _buildActivityCard(activity, index);
-                              },
+                            ],
+                          ),
+                        ),
+                      ),
+                    )
+                  : _filteredActivities.isEmpty
+                  ? Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.local_activity,
+                            size: 64,
+                            color: AppTheme.textSecondary.withOpacity(0.5),
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            'No activities found',
+                            style: TextStyle(
+                              color: AppTheme.textSecondary,
+                              fontSize: 18,
                             ),
+                          ),
+                        ],
+                      ),
+                    )
+                  : ListView.builder(
+                      padding: const EdgeInsets.all(16),
+                      itemCount: _filteredActivities.length,
+                      itemBuilder: (context, index) {
+                        final activity = _filteredActivities[index];
+                        return _buildActivityCard(activity, index);
+                      },
+                    ),
             ),
           ],
         ),
@@ -408,10 +445,7 @@ class _ActivityFinderScreenState extends State<ActivityFinderScreen>
                   end: Alignment.bottomRight,
                 )
               : LinearGradient(
-                  colors: [
-                    Colors.white,
-                    Colors.white.withOpacity(0.95),
-                  ],
+                  colors: [Colors.white, Colors.white.withOpacity(0.95)],
                 ),
           borderRadius: BorderRadius.circular(25),
           border: Border.all(
@@ -506,10 +540,7 @@ class _ActivityFinderScreenState extends State<ActivityFinderScreen>
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
-                      colors: [
-                        AppTheme.primaryColor,
-                        AppTheme.secondaryColor,
-                      ],
+                      colors: [AppTheme.primaryColor, AppTheme.secondaryColor],
                     ),
                     borderRadius: BorderRadius.circular(16),
                     boxShadow: [
@@ -567,17 +598,17 @@ class _ActivityFinderScreenState extends State<ActivityFinderScreen>
             const SizedBox(height: 12),
             Text(
               activity.description,
-              style: TextStyle(
-                color: AppTheme.textSecondary,
-                fontSize: 14,
-              ),
+              style: TextStyle(color: AppTheme.textSecondary, fontSize: 14),
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
             ),
             if (activity.startTime != null || activity.endTime != null) ...[
               const SizedBox(height: 12),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
                 decoration: BoxDecoration(
                   color: AppTheme.primaryColor.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(12),
@@ -598,8 +629,8 @@ class _ActivityFinderScreenState extends State<ActivityFinderScreen>
                       activity.startTime != null && activity.endTime != null
                           ? '${dateFormat.format(activity.startTime!)} ${timeFormat.format(activity.startTime!)} - ${timeFormat.format(activity.endTime!)}'
                           : activity.startTime != null
-                              ? 'Starts: ${dateFormat.format(activity.startTime!)} ${timeFormat.format(activity.startTime!)}'
-                              : 'Ends: ${dateFormat.format(activity.endTime!)} ${timeFormat.format(activity.endTime!)}',
+                          ? 'Starts: ${dateFormat.format(activity.startTime!)} ${timeFormat.format(activity.startTime!)}'
+                          : 'Ends: ${dateFormat.format(activity.endTime!)} ${timeFormat.format(activity.endTime!)}',
                       style: TextStyle(
                         color: AppTheme.primaryColor,
                         fontSize: 12,
@@ -615,13 +646,13 @@ class _ActivityFinderScreenState extends State<ActivityFinderScreen>
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 10,
+                  ),
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
-                      colors: [
-                        AppTheme.primaryColor,
-                        AppTheme.secondaryColor,
-                      ],
+                      colors: [AppTheme.primaryColor, AppTheme.secondaryColor],
                     ),
                     borderRadius: BorderRadius.circular(12),
                     boxShadow: [
@@ -647,10 +678,7 @@ class _ActivityFinderScreenState extends State<ActivityFinderScreen>
                       Container(
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
-                            colors: [
-                              Colors.green,
-                              Colors.green.shade700,
-                            ],
+                            colors: [Colors.green, Colors.green.shade700],
                           ),
                           borderRadius: BorderRadius.circular(12),
                           boxShadow: [
@@ -671,7 +699,10 @@ class _ActivityFinderScreenState extends State<ActivityFinderScreen>
                             );
                           },
                           icon: const Icon(Icons.map, color: Colors.white),
-                          label: const Text('Map', style: TextStyle(color: Colors.white)),
+                          label: const Text(
+                            'Map',
+                            style: TextStyle(color: Colors.white),
+                          ),
                           style: OutlinedButton.styleFrom(
                             side: BorderSide.none,
                             shape: RoundedRectangleBorder(
@@ -704,12 +735,17 @@ class _ActivityFinderScreenState extends State<ActivityFinderScreen>
                           // TODO: Add to itinerary
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                              content: Text('${activity.name} added to itinerary'),
+                              content: Text(
+                                '${activity.name} added to itinerary',
+                              ),
                             ),
                           );
                         },
                         icon: const Icon(Icons.add, color: Colors.white),
-                        label: const Text('Add', style: TextStyle(color: Colors.white)),
+                        label: const Text(
+                          'Add',
+                          style: TextStyle(color: Colors.white),
+                        ),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.transparent,
                           shadowColor: Colors.transparent,

@@ -1,0 +1,7 @@
+[error] The getter 'costPerNight' isn't defined for the type 'Accommodation' (c:\users\user\desktop\flutter\ projects\trip_planner\lib\screens\trip\trip_detail_screen.dart:333:43)
+[error] The getter 'origin' isn't defined for the type 'TravelRoute' (c:\users\user\desktop\flutter\ projects\trip_planner\lib\screens\trip\trip_detail_screen.dart:348:38)
+[error] The getter 'destination' isn't defined for the type 'TravelRoute' (c:\users\user\desktop\flutter\ projects\trip_planner\lib\screens\trip\trip_detail_screen.dart:348:52)
+[info] 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss (c:\users\user\desktop\flutter\ projects\trip_planner\lib\screens\trip\trip_detail_screen.dart:279:40)
+[warning] Unused import: 'package:intl/intl.dart' (c:\users\user\desktop\flutter\ projects\trip_planner\lib\screens\trip\trip_detail_screen.dart:2:8)
+[warning] Unused import: '../../utils/constants.dart' (c:\users\user\desktop\flutter\ projects\trip_planner\lib\screens\trip\trip_detail_screen.dart:4:8)
+[warning] Unused import: '../budget/budget_planner_screen.dart' (c:\users\user\desktop\flutter\ projects\trip_planner\lib\screens\trip\trip_detail_screen.dart:11:8)

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../theme/app_theme.dart';
 import '../../common_widgets/glassmorphism.dart';
+import '../../services/api_service.dart';
+import '../../models/travel_route.dart';
 
 /// Route Discovery Screen - View and filter travel routes
 class RouteDiscoveryScreen extends StatefulWidget {
@@ -16,6 +18,9 @@ class _RouteDiscoveryScreenState extends State<RouteDiscoveryScreen>
   String _selectedMode = 'All';
   String _sortBy = 'cost_low';
   final TextEditingController _searchController = TextEditingController();
+  List<TravelRoute> _routes = [];
+  bool _isLoading = false;
+  String? _errorMessage;
 
   @override
   void initState() {
@@ -25,6 +30,7 @@ class _RouteDiscoveryScreenState extends State<RouteDiscoveryScreen>
       vsync: this,
     );
     _animationController.forward();
+    _loadRoutes();
   }
 
   @override
@@ -34,92 +40,55 @@ class _RouteDiscoveryScreenState extends State<RouteDiscoveryScreen>
     super.dispose();
   }
 
-  // Mock route data
-  final List<Map<String, dynamic>> _routes = [
-    {
-      'id': '1',
-      'from': 'New York',
-      'to': 'Paris',
-      'mode': 'Flight',
-      'duration': '7h 30m',
-      'cost': 850.00,
-      'airline': 'Air France',
-      'departure': '08:00 AM',
-      'arrival': '09:30 PM',
-    },
-    {
-      'id': '2',
-      'from': 'New York',
-      'to': 'Paris',
-      'mode': 'Flight',
-      'duration': '8h 15m',
-      'cost': 720.00,
-      'airline': 'Delta Airlines',
-      'departure': '10:30 PM',
-      'arrival': '12:45 PM',
-    },
-    {
-      'id': '3',
-      'from': 'Tokyo',
-      'to': 'Bali',
-      'mode': 'Flight',
-      'duration': '6h 45m',
-      'cost': 450.00,
-      'airline': 'Garuda Indonesia',
-      'departure': '02:00 PM',
-      'arrival': '08:45 PM',
-    },
-    {
-      'id': '4',
-      'from': 'London',
-      'to': 'Paris',
-      'mode': 'Train',
-      'duration': '2h 20m',
-      'cost': 120.00,
-      'airline': 'Eurostar',
-      'departure': '09:00 AM',
-      'arrival': '11:20 AM',
-    },
-    {
-      'id': '5',
-      'from': 'Paris',
-      'to': 'Brussels',
-      'mode': 'Bus',
-      'duration': '3h 30m',
-      'cost': 35.00,
-      'airline': 'FlixBus',
-      'departure': '08:00 AM',
-      'arrival': '11:30 AM',
-    },
-  ];
+  Future<void> _loadRoutes() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
 
-  List<Map<String, dynamic>> get _filteredRoutes {
-    var filtered = List<Map<String, dynamic>>.from(_routes);
+    try {
+      final routes = await ApiService.getRoutes(
+        search: _searchController.text.trim().isEmpty
+            ? null
+            : _searchController.text.trim(),
+      );
+
+      if (mounted) {
+        setState(() {
+          _routes = routes;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _errorMessage = e.toString().replaceAll('Exception: ', '');
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  List<TravelRoute> get _filteredRoutes {
+    var filtered = List<TravelRoute>.from(_routes);
 
     // Filter by mode
     if (_selectedMode != 'All') {
       filtered = filtered
-          .where((route) => route['mode'] == _selectedMode)
+          .where(
+            (route) =>
+                route.travelMode.name.toLowerCase() ==
+                _selectedMode.toLowerCase(),
+          )
           .toList();
-    }
-
-    // Filter by search
-    if (_searchController.text.isNotEmpty) {
-      final searchLower = _searchController.text.toLowerCase();
-      filtered = filtered.where((route) {
-        return route['from'].toString().toLowerCase().contains(searchLower) ||
-            route['to'].toString().toLowerCase().contains(searchLower);
-      }).toList();
     }
 
     // Sort
     filtered.sort((a, b) {
       if (_sortBy == 'cost_low') {
-        return (a['cost'] as double).compareTo(b['cost'] as double);
+        return a.cost.compareTo(b.cost);
       } else if (_sortBy == 'cost_high') {
-        return (b['cost'] as double).compareTo(a['cost'] as double);
-      } else if (_sortBy == 'duration') {
-        return a['duration'].toString().compareTo(b['duration'].toString());
+        return b.cost.compareTo(a.cost);
       }
       return 0;
     });
@@ -148,10 +117,7 @@ class _RouteDiscoveryScreenState extends State<RouteDiscoveryScreen>
             Container(
               decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [
-                    AppTheme.primaryColor,
-                    AppTheme.secondaryColor,
-                  ],
+                  colors: [AppTheme.primaryColor, AppTheme.secondaryColor],
                 ),
                 boxShadow: [
                   BoxShadow(
@@ -223,7 +189,10 @@ class _RouteDiscoveryScreenState extends State<RouteDiscoveryScreen>
               opacity: 0.15,
               borderRadius: BorderRadius.circular(20),
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
                 margin: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
@@ -246,84 +215,97 @@ class _RouteDiscoveryScreenState extends State<RouteDiscoveryScreen>
                         child: Row(
                           children: ['All', 'Flight', 'Train', 'Bus', 'Car']
                               .map((mode) {
-                            final isSelected = _selectedMode == mode;
-                            return Padding(
-                              padding: const EdgeInsets.only(right: 8),
-                              child: Container(
-                                padding: const EdgeInsets.all(2),
-                                decoration: BoxDecoration(
-                                  gradient: isSelected
-                                      ? LinearGradient(
-                                          colors: [
-                                            const Color(0xFF1976D2), // Darker blue
-                                            AppTheme.primaryColor,
-                                          ],
-                                          begin: Alignment.topLeft,
-                                          end: Alignment.bottomRight,
-                                        )
-                                      : LinearGradient(
-                                          colors: [
-                                            Colors.white,
-                                            Colors.white.withOpacity(0.95),
-                                          ],
-                                        ),
-                                  borderRadius: BorderRadius.circular(25),
-                                  border: Border.all(
-                                    color: isSelected
-                                        ? Colors.transparent
-                                        : AppTheme.primaryColor.withOpacity(0.4),
-                                    width: 2,
-                                  ),
-                                  boxShadow: isSelected
-                                      ? [
-                                          BoxShadow(
-                                            color: AppTheme.primaryColor.withOpacity(0.5),
-                                            blurRadius: 12,
-                                            offset: const Offset(0, 4),
+                                final isSelected = _selectedMode == mode;
+                                return Padding(
+                                  padding: const EdgeInsets.only(right: 8),
+                                  child: Container(
+                                    padding: const EdgeInsets.all(2),
+                                    decoration: BoxDecoration(
+                                      gradient: isSelected
+                                          ? LinearGradient(
+                                              colors: [
+                                                const Color(
+                                                  0xFF1976D2,
+                                                ), // Darker blue
+                                                AppTheme.primaryColor,
+                                              ],
+                                              begin: Alignment.topLeft,
+                                              end: Alignment.bottomRight,
+                                            )
+                                          : LinearGradient(
+                                              colors: [
+                                                Colors.white,
+                                                Colors.white.withOpacity(0.95),
+                                              ],
+                                            ),
+                                      borderRadius: BorderRadius.circular(25),
+                                      border: Border.all(
+                                        color: isSelected
+                                            ? Colors.transparent
+                                            : AppTheme.primaryColor.withOpacity(
+                                                0.4,
+                                              ),
+                                        width: 2,
+                                      ),
+                                      boxShadow: isSelected
+                                          ? [
+                                              BoxShadow(
+                                                color: AppTheme.primaryColor
+                                                    .withOpacity(0.5),
+                                                blurRadius: 12,
+                                                offset: const Offset(0, 4),
+                                              ),
+                                            ]
+                                          : [
+                                              BoxShadow(
+                                                color: Colors.black.withOpacity(
+                                                  0.1,
+                                                ),
+                                                blurRadius: 4,
+                                                offset: const Offset(0, 2),
+                                              ),
+                                            ],
+                                    ),
+                                    child: Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 4,
+                                      ),
+                                      child: FilterChip(
+                                        label: Padding(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 4,
                                           ),
-                                        ]
-                                      : [
-                                          BoxShadow(
-                                            color: Colors.black.withOpacity(0.1),
-                                            blurRadius: 4,
-                                            offset: const Offset(0, 2),
+                                          child: Text(
+                                            mode,
+                                            style: TextStyle(
+                                              color: isSelected
+                                                  ? Colors.white
+                                                  : AppTheme.textPrimary,
+                                              fontWeight: isSelected
+                                                  ? FontWeight.bold
+                                                  : FontWeight.w600,
+                                              fontSize: 14,
+                                            ),
                                           ),
-                                        ],
-                                ),
-                                child: Padding(
-                                  padding: const EdgeInsets.symmetric(horizontal: 4),
-                                  child: FilterChip(
-                                    label: Padding(
-                                      padding: const EdgeInsets.symmetric(horizontal: 4),
-                                      child: Text(
-                                        mode,
-                                        style: TextStyle(
-                                          color: isSelected
-                                              ? Colors.white
-                                              : AppTheme.textPrimary,
-                                          fontWeight:
-                                              isSelected ? FontWeight.bold : FontWeight.w600,
-                                          fontSize: 14,
                                         ),
+                                        selected: isSelected,
+                                        onSelected: (selected) {
+                                          setState(() {
+                                            _selectedMode = mode;
+                                          });
+                                        },
+                                        selectedColor: Colors.transparent,
+                                        backgroundColor: Colors.transparent,
+                                        checkmarkColor: Colors.white,
+                                        side: BorderSide.none,
+                                        padding: EdgeInsets.zero,
+                                        labelPadding: EdgeInsets.zero,
                                       ),
                                     ),
-                                    selected: isSelected,
-                                    onSelected: (selected) {
-                                      setState(() {
-                                        _selectedMode = mode;
-                                      });
-                                    },
-                                    selectedColor: Colors.transparent,
-                                    backgroundColor: Colors.transparent,
-                                    checkmarkColor: Colors.white,
-                                    side: BorderSide.none,
-                                    padding: EdgeInsets.zero,
-                                    labelPadding: EdgeInsets.zero,
                                   ),
-                                ),
-                              ),
-                            );
-                          }).toList(),
+                                );
+                              })
+                              .toList(),
                         ),
                       ),
                     ),
@@ -357,7 +339,85 @@ class _RouteDiscoveryScreenState extends State<RouteDiscoveryScreen>
             const SizedBox(height: 8),
             // Routes List
             Expanded(
-              child: _filteredRoutes.isEmpty
+              child: _isLoading
+                  ? Center(
+                      child: CircularProgressIndicator(
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          AppTheme.primaryColor,
+                        ),
+                      ),
+                    )
+                  : _errorMessage != null
+                  ? Center(
+                      child: AnimatedGlassCard(
+                        delay: const Duration(milliseconds: 300),
+                        blur: 10.0,
+                        opacity: 0.2,
+                        borderRadius: BorderRadius.circular(20),
+                        child: Container(
+                          padding: const EdgeInsets.all(24),
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                Colors.white.withOpacity(0.9),
+                                Colors.white.withOpacity(0.7),
+                              ],
+                            ),
+                          ),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.error_outline,
+                                size: 64,
+                                color: AppTheme.errorColor,
+                              ),
+                              const SizedBox(height: 16),
+                              Text(
+                                _errorMessage!,
+                                style: const TextStyle(
+                                  color: AppTheme.errorColor,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                              const SizedBox(height: 16),
+                              Container(
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    colors: [
+                                      AppTheme.errorColor,
+                                      AppTheme.errorColor.withOpacity(0.7),
+                                    ],
+                                  ),
+                                  borderRadius: BorderRadius.circular(12),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: AppTheme.errorColor.withOpacity(
+                                        0.3,
+                                      ),
+                                      blurRadius: 8,
+                                      offset: const Offset(0, 3),
+                                    ),
+                                  ],
+                                ),
+                                child: ElevatedButton(
+                                  onPressed: _loadRoutes,
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.transparent,
+                                    shadowColor: Colors.transparent,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                  ),
+                                  child: const Text('Retry'),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    )
+                  : _filteredRoutes.isEmpty
                   ? Center(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -408,145 +468,130 @@ class _RouteDiscoveryScreenState extends State<RouteDiscoveryScreen>
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Row(
-                                          children: [
-                                            Icon(
-                                              _getModeIcon(route['mode']),
-                                              color: AppTheme.primaryColor,
-                                              size: 20,
-                                            ),
-                                            const SizedBox(width: 8),
-                                            Text(
-                                              route['mode'],
-                                              style: TextStyle(
-                                                color: AppTheme.primaryColor,
-                                                fontWeight: FontWeight.w600,
-                                                fontSize: 14,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                        const SizedBox(height: 8),
-                                        Row(
-                                          children: [
-                                            Text(
-                                              route['from'],
-                                              style: const TextStyle(
-                                                fontSize: 18,
-                                                fontWeight: FontWeight.bold,
-                                              ),
-                                            ),
-                                            Padding(
-                                              padding: const EdgeInsets.symmetric(
-                                                horizontal: 8,
-                                              ),
-                                              child: Icon(
-                                                Icons.arrow_forward,
-                                                size: 16,
-                                                color: AppTheme.textSecondary,
-                                              ),
-                                            ),
-                                            Text(
-                                              route['to'],
-                                              style: const TextStyle(
-                                                fontSize: 18,
-                                                fontWeight: FontWeight.bold,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  Column(
-                                    crossAxisAlignment: CrossAxisAlignment.end,
-                                    children: [
-                                      Text(
-                                        '\$${route['cost'].toStringAsFixed(0)}',
-                                        style: TextStyle(
-                                          fontSize: 24,
-                                          fontWeight: FontWeight.bold,
-                                          color: AppTheme.primaryColor,
-                                        ),
-                                      ),
-                                      Text(
-                                        route['duration'],
-                                        style: TextStyle(
-                                          color: AppTheme.textSecondary,
-                                          fontSize: 12,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 12),
-                              Divider(
-                                color: AppTheme.textSecondary.withOpacity(0.2),
-                              ),
-                              const SizedBox(height: 12),
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        route['airline'],
-                                        style: const TextStyle(
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 4),
-                                      Row(
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
                                         children: [
-                                          Icon(
-                                            Icons.schedule,
-                                            size: 14,
-                                            color: AppTheme.textSecondary,
+                                          Row(
+                                            children: [
+                                              Icon(
+                                                _getModeIcon(route.travelMode),
+                                                color: AppTheme.primaryColor,
+                                                size: 20,
+                                              ),
+                                              const SizedBox(width: 8),
+                                              Text(
+                                                route.travelMode.name
+                                                    .toUpperCase(),
+                                                style: TextStyle(
+                                                  color: AppTheme.primaryColor,
+                                                  fontWeight: FontWeight.w600,
+                                                  fontSize: 14,
+                                                ),
+                                              ),
+                                            ],
                                           ),
-                                          const SizedBox(width: 4),
-                                          Text(
-                                            '${route['departure']} - ${route['arrival']}',
-                                            style: TextStyle(
-                                              color: AppTheme.textSecondary,
-                                              fontSize: 12,
-                                            ),
+                                          const SizedBox(height: 8),
+                                          Row(
+                                            children: [
+                                              Text(
+                                                route.startLocation,
+                                                style: const TextStyle(
+                                                  fontSize: 18,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
+                                              Padding(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                      horizontal: 8,
+                                                    ),
+                                                child: Icon(
+                                                  Icons.arrow_forward,
+                                                  size: 16,
+                                                  color: AppTheme.textSecondary,
+                                                ),
+                                              ),
+                                              Text(
+                                                route.endLocation,
+                                                style: const TextStyle(
+                                                  fontSize: 18,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
+                                            ],
                                           ),
                                         ],
                                       ),
-                                    ],
-                                  ),
-                                  ElevatedButton(
-                                    onPressed: () {
-                                      // TODO: Add route to trip
-                                      ScaffoldMessenger.of(context)
-                                          .showSnackBar(
-                                        SnackBar(
-                                          content: Text(
-                                            'Route added to trip planning',
+                                    ),
+                                    Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.end,
+                                      children: [
+                                        Text(
+                                          '\$${route.cost.toStringAsFixed(0)}',
+                                          style: TextStyle(
+                                            fontSize: 24,
+                                            fontWeight: FontWeight.bold,
+                                            color: AppTheme.primaryColor,
                                           ),
                                         ),
-                                      );
-                                    },
-                                    child: const Text('Select Route'),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 12),
+                                Text(
+                                  route.description,
+                                  style: TextStyle(
+                                    color: AppTheme.textSecondary,
+                                    fontSize: 14,
                                   ),
-                                ],
-                              ),
-                            ],
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                const SizedBox(height: 12),
+                                Divider(
+                                  color: AppTheme.textSecondary.withOpacity(
+                                    0.2,
+                                  ),
+                                ),
+                                const SizedBox(height: 12),
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text(
+                                      route.name,
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                    ElevatedButton(
+                                      onPressed: () {
+                                        // TODO: Add route to trip
+                                        ScaffoldMessenger.of(
+                                          context,
+                                        ).showSnackBar(
+                                          SnackBar(
+                                            content: Text(
+                                              'Route added to trip planning',
+                                            ),
+                                          ),
+                                        );
+                                      },
+                                      child: const Text('Select Route'),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
                           ),
-                        ),
                         );
                       },
                     ),
@@ -557,16 +602,18 @@ class _RouteDiscoveryScreenState extends State<RouteDiscoveryScreen>
     );
   }
 
-  IconData _getModeIcon(String mode) {
+  IconData _getModeIcon(TravelMode mode) {
     switch (mode) {
-      case 'Flight':
+      case TravelMode.flight:
         return Icons.flight;
-      case 'Train':
+      case TravelMode.train:
         return Icons.train;
-      case 'Bus':
+      case TravelMode.bus:
         return Icons.directions_bus;
-      case 'Car':
+      case TravelMode.car:
         return Icons.directions_car;
+      case TravelMode.walking:
+        return Icons.directions_walk;
       default:
         return Icons.route;
     }

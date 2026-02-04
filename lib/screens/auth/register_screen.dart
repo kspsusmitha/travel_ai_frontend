@@ -3,6 +3,7 @@ import '../../theme/app_theme.dart';
 import '../../models/user.dart';
 import '../../common_widgets/glassmorphism.dart';
 import '../home/home_screen.dart';
+import '../../services/api_service.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -60,35 +61,42 @@ class _RegisterScreenState extends State<RegisterScreen>
 
   Future<void> _handleRegister() async {
     if (_formKey.currentState!.validate()) {
-      if (_selectedUserType == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Please select your user type'),
-            backgroundColor: AppTheme.errorColor,
-          ),
-        );
-        return;
-      }
-
       setState(() {
         _isLoading = true;
       });
 
-      // Simulate API call delay
-      await Future.delayed(const Duration(seconds: 1));
-
-      // TODO: Implement API call
-      if (mounted) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const HomeScreen()),
+      try {
+        await ApiService.register(
+          username: _usernameController.text.trim(),
+          password: _passwordController.text,
+          email: _emailController.text.trim(),
+          firstName: _nameController.text.trim(),
         );
-      }
 
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Registration successful! Please login.'),
+              backgroundColor: AppTheme.primaryColor,
+            ),
+          );
+          Navigator.pop(context); // Go back to login
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(e.toString().replaceAll('Exception: ', '')),
+              backgroundColor: AppTheme.errorColor,
+            ),
+          );
+        }
+      } finally {
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+          });
+        }
       }
     }
   }
